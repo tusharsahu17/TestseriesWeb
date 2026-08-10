@@ -32,7 +32,7 @@ export default function DashboardLayout({
     dispatch(logout());
     router.push("/auth?tab=login");
   };
-
+ 
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: "⌂" },
     { name: "My Exams", href: "/dashboard/exams", icon: "▣" },
