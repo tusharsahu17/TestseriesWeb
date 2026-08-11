@@ -1,10 +1,10 @@
-import axios from 'axios';
-import { API_BASE_URL } from '../constants/apiEndpoints';
+import axios from "axios";
+import process from "process";
 
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: process.env.NEXT_PUBLIC_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -14,15 +14,15 @@ apiClient.interceptors.request.use(
     // We can't access the Redux store directly here easily without circular dependencies,
     // so we get it from localStorage (assuming we save it there) or handle it differently.
     // For now, let's grab it from localStorage if it exists.
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 export const getData = async (url: string, params = {}) => {
