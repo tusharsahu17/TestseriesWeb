@@ -4,7 +4,6 @@ import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { postData } from '../../../services/apiClient';
 
-import { API_BASE_URL } from '../../../constants/apiEndpoints';
 
 export default function BulkUploadPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -72,7 +71,7 @@ export default function BulkUploadPage() {
       // Using fetch directly because axios with FormData sometimes requires specific header handling
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`${API_BASE_URL}/api/upload`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
