@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser, registerUser, selectAuthLoading, selectAuthError } from './authSlice';
 import { AppDispatch } from '../../store/store';
@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import './auth.css';
 import { Loader2 } from 'lucide-react';
 
-export default function AuthPage() {
+function AuthContent() {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get('tab') === 'signup' ? 'signup' : 'login';
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>(initialTab);
@@ -266,5 +266,17 @@ export default function AuthPage() {
         </div>
       </main>
     </>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      </div>
+    }>
+      <AuthContent />
+    </Suspense>
   );
 }
