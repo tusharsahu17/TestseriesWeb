@@ -1,198 +1,736 @@
+/* =========================================
+   EXAMS PAGE
+========================================= */
+
+.dashboard-exams-page {
+  width: 100%;
+  padding: 4px 2px 40px;
+}
+
+
+/* =========================================
+   HEADER
+========================================= */
+
 .dashboard-page-header {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
+
+  margin-bottom: 26px;
 }
 
-.dashboard-page-header h1 {
-  font-size: 26px;
-  letter-spacing: -0.6px;
-}
-
-.dashboard-page-header p {
-  margin-top: 6px;
-  color: #8993a5;
-  font-size: 13px;
-}
-
-.dashboard-filter-btn {
-  padding: 10px 15px;
-  border: 1px solid #e1e4ea;
-  border-radius: 9px;
-  background: white;
-  color: #555f70;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.dashboard-filters {
+.dashboard-page-heading {
   display: flex;
-  gap: 10px;
-  margin-bottom: 25px;
+  align-items: center;
+  gap: 12px;
 }
 
-.dashboard-filter {
-  padding: 9px 14px;
-  border-radius: 8px;
-  border: 1px solid #e4e6eb;
-  background: white;
-  color: #697386;
-  font-size: 12px;
-  cursor: pointer;
-}
+.dashboard-page-heading-icon {
+  width: 42px;
+  height: 42px;
 
-.dashboard-filter.active {
-  background: #6366f1;
-  color: white;
-  border-color: #6366f1;
-}
-
-.dashboard-exam-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-
-.dashboard-exam-card {
-  background: white;
-  border: 1px solid #e8eaf0;
-  border-radius: 16px;
-  overflow: hidden;
-  transition: 0.25s;
-  cursor: pointer;
-}
-
-.dashboard-exam-card:hover {
-  transform: translateY(-4px);
-  border-color: #d9d7ff;
-  box-shadow: 0 15px 35px rgba(30, 35, 60, 0.08);
-}
-
-.dashboard-exam-cover {
-  height: 145px;
-  padding: 20px;
-  position: relative;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-}
-
-.dashboard-exam-cover.blue { background: linear-gradient(135deg, #0284c7, #2563eb); }
-.dashboard-exam-cover.green { background: linear-gradient(135deg, #059669, #10b981); }
-.dashboard-exam-cover.orange { background: linear-gradient(135deg, #ea580c, #f97316); }
-.dashboard-exam-cover.pink { background: linear-gradient(135deg, #db2777, #ec4899); }
-.dashboard-exam-cover.cyan { background: linear-gradient(135deg, #0891b2, #06b6d4); }
-
-.dashboard-exam-icon-large {
-  width: 48px;
-  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.18);
-  backdrop-filter: blur(10px);
-  color: white;
-  font-size: 23px;
-}
 
-.dashboard-exam-tag {
-  position: absolute;
-  right: 18px;
-  top: 20px;
-  padding: 5px 9px;
-  border-radius: 6px;
-  background: rgba(255,255,255,0.18);
-  color: white;
-  font-size: 10px;
-  font-weight: 600;
-}
+  border-radius: 11px;
 
-.dashboard-exam-cover h2 {
-  position: absolute;
-  bottom: 17px;
-  left: 20px;
-  color: white;
+  background: #f0eeff;
+
   font-size: 19px;
 }
 
-.dashboard-exam-body {
-  padding: 19px;
+.dashboard-page-header h1 {
+  margin: 0;
+
+  color: #182132;
+
+  font-size: 25px;
+  font-weight: 650;
+
+  line-height: 1.2;
+  letter-spacing: -0.5px;
 }
 
-.dashboard-exam-description {
-  color: #7b8494;
+.dashboard-page-header p {
+  margin: 5px 0 0;
+
+  color: #8b95a7;
+
   font-size: 12px;
-  line-height: 1.6;
-  margin-bottom: 18px;
-  min-height: 40px;
+  line-height: 1.5;
 }
 
-.dashboard-exam-info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 18px;
-}
 
-.dashboard-info-item {
+/* =========================================
+   FILTER BUTTON
+========================================= */
+
+.dashboard-filter-btn {
+  height: 38px;
+
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
+
+  padding: 0 14px;
+
+  border: 1px solid #e3e6ec;
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  color: #596477;
+
+  font-size: 11px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
 }
 
-.dashboard-info-icon {
-  width: 30px;
-  height: 30px;
+.dashboard-filter-btn:hover {
+  border-color: #d4d8e1;
+  background: #fafaff;
+}
+
+
+/* =========================================
+   TOOLBAR
+========================================= */
+
+.dashboard-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  margin-bottom: 24px;
+
+  padding-bottom: 20px;
+
+  border-bottom: 1px solid #eceef3;
+}
+
+
+/* =========================================
+   FILTER TABS
+========================================= */
+
+.dashboard-filters {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.dashboard-filter {
+  height: 35px;
+
+  padding: 0 14px;
+
+  border: 1px solid #e3e6ec;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #687386;
+
+  font-size: 11px;
+  font-weight: 500;
+
+  white-space: nowrap;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.dashboard-filter:hover {
+  border-color: #d4d8e2;
+  color: #4f5a6d;
+}
+
+.dashboard-filter.active {
+  border-color: #6256e8;
+  background: #6256e8;
+
+  color: #ffffff;
+}
+
+
+/* =========================================
+   SEARCH
+========================================= */
+
+.dashboard-search {
+  width: 280px;
+  height: 36px;
+
+  position: relative;
+
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-search svg {
+  position: absolute;
+  left: 12px;
+
+  color: #929aaa;
+
+  pointer-events: none;
+}
+
+.dashboard-search input {
+  width: 100%;
+  height: 100%;
+
+  padding: 0 12px 0 35px;
+
+  border: 1px solid #e2e5eb;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #273143;
+
+  outline: none;
+
+  font-size: 11px;
+
+  transition: all 0.2s ease;
+}
+
+.dashboard-search input::placeholder {
+  color: #a0a7b4;
+}
+
+.dashboard-search input:focus {
+  border-color: #bdb7ff;
+
+  box-shadow:
+    0 0 0 3px rgba(98, 86, 232, 0.07);
+}
+
+
+/* =========================================
+   EXAM GRID
+========================================= */
+
+.dashboard-exam-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(260px, 1fr));
+
+  gap: 18px;
+
+  align-items: start;
+}
+
+
+/* =========================================
+   EXAM CARD
+========================================= */
+
+.dashboard-exam-card {
+  overflow: hidden;
+
+  background: #ffffff;
+
+  border: 1px solid #e6e8ee;
+  border-radius: 15px;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+
+.dashboard-exam-card:hover {
+  transform: translateY(-3px);
+
+  border-color: #dcd9ff;
+
+  box-shadow:
+    0 12px 30px rgba(25, 32, 52, 0.07);
+}
+
+
+/* =========================================
+   CARD COVER
+========================================= */
+
+.dashboard-exam-cover {
+  height: 154px;
+
+  padding: 20px;
+
+  position: relative;
+
+  background:
+    radial-gradient(
+      circle at 85% 15%,
+      rgba(255, 255, 255, 0.13),
+      transparent 30%
+    ),
+    linear-gradient(
+      135deg,
+      #6557ef,
+      #7954ef
+    );
+
+  color: white;
+}
+
+.dashboard-exam-cover.blue {
+  background:
+    radial-gradient(
+      circle at 85% 15%,
+      rgba(255,255,255,0.13),
+      transparent 30%
+    ),
+    linear-gradient(
+      135deg,
+      #1686c9,
+      #2863df
+    );
+}
+
+.dashboard-exam-cover.green {
+  background:
+    radial-gradient(
+      circle at 85% 15%,
+      rgba(255,255,255,0.13),
+      transparent 30%
+    ),
+    linear-gradient(
+      135deg,
+      #07966b,
+      #10b981
+    );
+}
+
+.dashboard-exam-cover.orange {
+  background:
+    radial-gradient(
+      circle at 85% 15%,
+      rgba(255,255,255,0.13),
+      transparent 30%
+    ),
+    linear-gradient(
+      135deg,
+      #e76517,
+      #f28a32
+    );
+}
+
+.dashboard-exam-cover.pink {
+  background:
+    radial-gradient(
+      circle at 85% 15%,
+      rgba(255,255,255,0.13),
+      transparent 30%
+    ),
+    linear-gradient(
+      135deg,
+      #d72b77,
+      #e95b9a
+    );
+}
+
+.dashboard-exam-cover.cyan {
+  background:
+    radial-gradient(
+      circle at 85% 15%,
+      rgba(255,255,255,0.13),
+      transparent 30%
+    ),
+    linear-gradient(
+      135deg,
+      #088da8,
+      #16b7ce
+    );
+}
+
+
+/* =========================================
+   COVER TOP
+========================================= */
+
+.dashboard-exam-cover-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+
+/* =========================================
+   EXAM ICON
+========================================= */
+
+.dashboard-exam-icon-large {
+  width: 43px;
+  height: 43px;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
+  border-radius: 11px;
+
+  background: rgba(255, 255, 255, 0.15);
+
+  color: #ffffff;
+
+  font-size: 21px;
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+
+/* =========================================
+   EXAM TAG
+========================================= */
+
+.dashboard-exam-tag {
+  padding: 5px 9px;
+
+  border-radius: 6px;
+
+  background: rgba(255, 255, 255, 0.15);
+
+  color: #ffffff;
+
+  font-size: 9px;
+  font-weight: 600;
+}
+
+
+/* =========================================
+   EXAM TITLE
+========================================= */
+
+.dashboard-exam-cover h2 {
+  position: absolute;
+
+  left: 20px;
+  bottom: 19px;
+
+  margin: 0;
+
+  color: #ffffff;
+
+  font-size: 18px;
+  font-weight: 600;
+
+  letter-spacing: -0.2px;
+}
+
+
+/* =========================================
+   CARD BODY
+========================================= */
+
+.dashboard-exam-body {
+  padding: 18px 19px 17px;
+}
+
+
+/* =========================================
+   DESCRIPTION
+========================================= */
+
+.dashboard-exam-description {
+  min-height: 38px;
+
+  margin: 0 0 17px;
+
+  color: #737d8f;
+
+  font-size: 11px;
+
+  line-height: 1.55;
+}
+
+
+/* =========================================
+   INFORMATION
+========================================= */
+
+.dashboard-exam-info-grid {
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  column-gap: 20px;
+  row-gap: 14px;
+
+  margin-bottom: 17px;
+}
+
+.dashboard-info-item {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+}
+
+.dashboard-info-icon {
+  width: 29px;
+  height: 29px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   border-radius: 8px;
-  background: #f4f4ff;
-  color: #6366f1;
-  font-size: 13px;
+
+  background: #f4f2ff;
+
+  color: #6557ed;
+
+  font-size: 11px;
+}
+
+.dashboard-info-item > div:last-child {
+  min-width: 0;
 }
 
 .dashboard-info-item span {
   display: block;
-  color: #969eac;
-  font-size: 9px;
+
+  margin-bottom: 3px;
+
+  color: #9aa2b0;
+
+  font-size: 8px;
+  font-weight: 400;
 }
 
 .dashboard-info-item strong {
   display: block;
-  margin-top: 2px;
-  font-size: 11px;
+
+  color: #252e3e;
+
+  font-size: 10px;
+  font-weight: 600;
+
+  white-space: nowrap;
 }
+
+
+/* =========================================
+   CARD FOOTER
+========================================= */
 
 .dashboard-exam-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
+  gap: 10px;
+
   padding-top: 15px;
-  border-top: 1px solid #eef0f4;
+
+  border-top: 1px solid #edf0f3;
 }
 
 .dashboard-subjects-list {
-  color: #8a93a3;
-  font-size: 10px;
+  color: #8992a2;
+
+  font-size: 9px;
+
+  line-height: 1.4;
+
+  white-space: nowrap;
 }
+
+
+/* =========================================
+   DETAILS BUTTON
+========================================= */
 
 .dashboard-details-btn {
+  height: 31px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+
+  flex-shrink: 0;
+
+  padding: 0 11px;
+
   border: none;
-  background: #f1f0ff;
-  color: #6366f1;
-  padding: 8px 12px;
   border-radius: 7px;
-  font-size: 10px;
+
+  background: #f0eeff;
+
+  color: #5d50df;
+
+  font-size: 9px;
   font-weight: 600;
+
   cursor: pointer;
+
+  transition: all 0.2s ease;
 }
 
-@media(max-width:1100px) {
-  .dashboard-exam-grid { grid-template-columns: repeat(2, 1fr); }
+.dashboard-details-btn:hover {
+  background: #e6e3ff;
 }
 
-@media(max-width:600px) {
-  .dashboard-exam-grid { grid-template-columns: 1fr; }
-  .dashboard-page-header h1 { font-size: 22px; }
+
+/* =========================================
+   LOADING
+========================================= */
+
+.dashboard-exams-loading {
+  min-height: 300px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-loading-icon {
+  width: 30px;
+  height: 30px;
+
+  color: #6357ed;
+
+  animation: dashboard-spin 1s linear infinite;
+}
+
+@keyframes dashboard-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* =========================================
+   ERROR
+========================================= */
+
+.dashboard-exams-error {
+  padding: 14px 16px;
+
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+
+  background: #fef2f2;
+
+  color: #dc2626;
+
+  font-size: 12px;
+}
+
+
+/* =========================================
+   NO EXAMS
+========================================= */
+
+.dashboard-no-exams {
+  grid-column: 1 / -1;
+
+  padding: 50px 20px;
+
+  text-align: center;
+
+  color: #8b94a4;
+
+  font-size: 12px;
+}
+
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 1200px) {
+
+  .dashboard-exam-grid {
+    grid-template-columns:
+      repeat(2, minmax(260px, 1fr));
+  }
+
+}
+
+
+@media (max-width: 800px) {
+
+  .dashboard-page-header {
+    align-items: flex-start;
+  }
+
+  .dashboard-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dashboard-search {
+    width: 100%;
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  .dashboard-exams-page {
+    padding: 0 0 30px;
+  }
+
+  .dashboard-page-header {
+    margin-bottom: 20px;
+  }
+
+  .dashboard-page-heading-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .dashboard-page-header h1 {
+    font-size: 21px;
+  }
+
+  .dashboard-page-header p {
+    font-size: 11px;
+  }
+
+  .dashboard-filter-btn {
+    display: none;
+  }
+
+  .dashboard-filters {
+    width: 100%;
+
+    overflow-x: auto;
+
+    padding-bottom: 2px;
+  }
+
+  .dashboard-filter {
+    flex-shrink: 0;
+  }
+
+  .dashboard-exam-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-exam-cover {
+    height: 150px;
+  }
+
 }

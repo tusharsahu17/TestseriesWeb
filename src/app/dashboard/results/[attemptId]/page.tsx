@@ -89,15 +89,6 @@ export default function ResultPage() {
 
   return (
     <div className="min-h-screen bg-[#f6f7fb] text-[#172033]">
-      <header className="header">
-        <div className="brand">
-          <div className="logo">Q</div>
-          <h2>Quizly</h2>
-        </div>
-        <button className="header-btn" onClick={goToTests}>
-          ← Back to Tests
-        </button>
-      </header>
 
       <main className="container">
         <div className="page-title">
