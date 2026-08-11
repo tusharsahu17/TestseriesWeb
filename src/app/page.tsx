@@ -1,58 +1,109 @@
-import QuizList from '../components/QuizList';
-import { BrainCircuit } from 'lucide-react';
 import Link from 'next/link';
+import { ArrowRight, BrainCircuit, Target, Zap, LayoutDashboard, Award } from 'lucide-react';
+import './landing.css';
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gray-50">
-      {/* Header section */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-2">
-              <div className="bg-indigo-600 p-2 rounded-lg">
-                <BrainCircuit className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">QuizMaster</span>
-            </div>
-            <div>
-              <Link href="/auth?tab=login" className="text-gray-600 hover:text-gray-900 font-medium px-4 py-2 inline-block">
-                Login
-              </Link>
-              <Link href="/auth?tab=signup" className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-block">
-                Sign Up
-              </Link>
-            </div>
+    <main className="landing-container">
+      {/* NAVBAR */}
+      <nav className="landing-nav">
+        <Link href="/" className="landing-logo">
+          <div className="landing-logo-icon">
+            <BrainCircuit size={20} />
           </div>
+          QuizMaster
+        </Link>
+        
+        <div className="landing-nav-actions">
+          <Link href="/auth?tab=login" className="landing-login-btn">
+            Login
+          </Link>
+          <Link href="/auth?tab=signup" className="landing-signup-btn">
+            Get Started
+          </Link>
         </div>
-      </header>
+      </nav>
 
-      {/* Hero section */}
-      <div className="bg-indigo-900 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-2xl">
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl mb-4">
-              Test your knowledge
-            </h1>
-            <p className="text-lg text-indigo-200">
-              Explore our wide variety of quizzes, challenge yourself, and learn something new every day.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Main content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex justify-between items-end mb-8">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Available Quizzes</h2>
-            <p className="text-gray-500 mt-1">Select a quiz below to get started</p>
-          </div>
+      {/* HERO SECTION */}
+      <section className="landing-hero">
+        <div className="landing-glow-1"></div>
+        <div className="landing-glow-2"></div>
+        
+        <div className="landing-badge">
+          <span></span> New Exams Dashboard Live
         </div>
         
-        {/* Quiz List Component */}
-        <QuizList />
-      </div>
+        <h1>
+          Master your subjects with <span>Interactive Exams</span>
+        </h1>
+        
+        <p>
+          Challenge yourself with our curated test series. Track your performance, discover your weak points, and improve your knowledge every single day.
+        </p>
+        
+        <div className="landing-cta-group">
+          <Link href="/auth?tab=signup" className="landing-btn-primary">
+            Start Learning Free <ArrowRight size={18} />
+          </Link>
+          <Link href="/dashboard" className="landing-btn-secondary">
+            View Dashboard
+          </Link>
+        </div>
+        
+        {/* DASHBOARD PREVIEW GLASSMORPHISM */}
+        <div className="landing-preview-wrapper">
+          <div className="landing-preview">
+            <div className="landing-preview-header">
+              <div className="landing-dot red"></div>
+              <div className="landing-dot yellow"></div>
+              <div className="landing-dot green"></div>
+            </div>
+            <div className="landing-preview-grid">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="landing-preview-card">
+                  <div className="landing-preview-card-icon">
+                    {i === 1 ? '📐' : i === 2 ? '⚡' : '🔬'}
+                  </div>
+                  <div className="landing-preview-card-title"></div>
+                  <div className="landing-preview-card-line"></div>
+                  <div className="landing-preview-card-line" style={{ width: '50%' }}></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURES SECTION */}
+      <section className="landing-features">
+        <h2 className="landing-section-title">Everything you need to succeed</h2>
+        
+        <div className="landing-features-grid">
+          <div className="landing-feature-card">
+            <div className="landing-feature-icon">
+              <Target size={24} />
+            </div>
+            <h3>Targeted Practice</h3>
+            <p>Focus on specific subjects and topics with our extensive library of competitive and university exams.</p>
+          </div>
+          
+          <div className="landing-feature-card">
+            <div className="landing-feature-icon">
+              <Zap size={24} />
+            </div>
+            <h3>Instant Feedback</h3>
+            <p>Get immediate results and detailed explanations for every question to learn from your mistakes instantly.</p>
+          </div>
+          
+          <div className="landing-feature-card">
+            <div className="landing-feature-icon">
+              <LayoutDashboard size={24} />
+            </div>
+            <h3>Beautiful Dashboard</h3>
+            <p>Track your progress, view attempt history, and manage your learning journey through a stunning interface.</p>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }
