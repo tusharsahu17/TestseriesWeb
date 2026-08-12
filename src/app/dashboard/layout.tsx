@@ -88,20 +88,7 @@ export default function DashboardLayout({
           </Link>
         </nav>
 
-        <div className="dashboard-sidebar-bottom">
-          <div className="dashboard-upgrade-card">
-            <h4>Unlock more tests 🚀</h4>
-            <p>Get access to premium exams, detailed analytics and more.</p>
-            <button className="dashboard-upgrade-btn">Upgrade Plan</button>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="dashboard-nav-item w-full text-left bg-transparent border-none"
-            style={{ width: "100%" }}
-          >
-            <span className="dashboard-nav-icon">↪</span> Logout
-          </button>
-        </div>
+       
       </aside>
 
       {/* MAIN */}
