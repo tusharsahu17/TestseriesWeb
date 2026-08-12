@@ -675,6 +675,10 @@
 
 @media (max-width: 800px) {
   .dashboard-sidebar { display: none; }
+  .dashboard-sidebar.mobile-open { 
+    display: block; 
+    box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+  }
   .dashboard-main { margin-left: 0; width: 100%; }
   .dashboard-mobile-header {
     display: flex;

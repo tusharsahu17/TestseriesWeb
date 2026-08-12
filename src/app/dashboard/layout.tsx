@@ -16,7 +16,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const dispatch = useDispatch();
   const [isMounted, setIsMounted] = useState(false);
-
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -51,7 +51,7 @@ export default function DashboardLayout({
       }}
     >
       {/* SIDEBAR */}
-      <aside className="dashboard-sidebar">
+      <aside className={`dashboard-sidebar ${isSidebarOpen ? "mobile-open" : ""}`}>
         <div className="dashboard-logo">
           <div className="dashboard-logo-icon">✦</div>
           <span>Quizly</span>
@@ -68,6 +68,7 @@ export default function DashboardLayout({
                 key={item.name}
                 href={item.href}
                 className={`dashboard-nav-item ${isActive ? "active" : ""}`}
+                onClick={() => setIsSidebarOpen(false)}
               >
                 <span className="dashboard-nav-icon">{item.icon}</span>
                 {item.name}
@@ -99,7 +100,12 @@ export default function DashboardLayout({
             <div className="dashboard-mobile-logo-icon">✦</div>
             Quizly
           </div>
-          <div>☰</div>
+          <div 
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+            style={{ cursor: "pointer", fontSize: "24px" }}
+          >
+            ☰
+          </div>
         </div>
 
         {/* Topbar */}
