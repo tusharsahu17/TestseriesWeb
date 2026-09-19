@@ -77,12 +77,7 @@ export default function SubjectsPage() {
           className="dashboard-start-btn" 
           disabled={isStarting}
           onClick={() => {
-            if (subjects.length > 0) {
-              const firstSubjectId = subjects[0].id || subjects[0]._id;
-              handleStartTest(firstSubjectId);
-            } else {
-              alert('No subjects available for this exam yet.');
-            }
+            router.push(`/dashboard/exams/${examId}/tests`);
           }}
         >
           {isStarting ? 'Loading...' : 'Start Exam →'}
