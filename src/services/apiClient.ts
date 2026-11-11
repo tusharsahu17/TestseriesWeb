@@ -1,5 +1,4 @@
-import axios from "axios";
-
+import axios, { AxiosError } from "axios";
 
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BASE_URL,
@@ -11,9 +10,6 @@ const apiClient = axios.create({
 // Request interceptor to add the auth token to headers
 apiClient.interceptors.request.use(
   (config) => {
-    // We can't access the Redux store directly here easily without circular dependencies,
-    // so we get it from localStorage (assuming we save it there) or handle it differently.
-    // For now, let's grab it from localStorage if it exists.
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("token");
       if (token) {
@@ -25,18 +21,62 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-export const getData = async (url: string, params = {}) => {
-  const response = await apiClient.get(url, { params });
+// Response interceptor to handle expired/invalid auth tokens gracefully
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError) => {
+    const status = error.response?.status;
+    const requestUrl = error.config?.url || "";
+    const isAuthRoute = requestUrl.includes("/api/auth/");
+
+    if (status === 401 && !isAuthRoute && typeof window !== "undefined") {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.dispatchEvent(new Event("auth:unauthorized"));
+    }
+    return Promise.reject(error);
+  },
+);
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const getData = async <T = any>(
+  url: string,
+  params: Record<string, unknown> = {},
+): Promise<T> => {
+  const response = await apiClient.get<T>(url, { params });
   return response.data;
 };
 
-export const postData = async (url: string, data = {}) => {
-  const response = await apiClient.post(url, data);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const postData = async <T = any>(
+  url: string,
+  data: unknown = {},
+): Promise<T> => {
+  const response = await apiClient.post<T>(url, data);
   return response.data;
 };
 
-export const putData = async (url: string, data = {}) => {
-  const response = await apiClient.put(url, data);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const putData = async <T = any>(
+  url: string,
+  data: unknown = {},
+): Promise<T> => {
+  const response = await apiClient.put<T>(url, data);
+  return response.data;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const patchData = async <T = any>(
+  url: string,
+  data: unknown = {},
+): Promise<T> => {
+  const response = await apiClient.patch<T>(url, data);
+  return response.data;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const deleteData = async <T = any>(url: string): Promise<T> => {
+  const response = await apiClient.delete<T>(url);
   return response.data;
 };
 

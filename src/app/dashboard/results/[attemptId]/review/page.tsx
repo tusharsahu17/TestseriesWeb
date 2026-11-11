@@ -1,9 +1,18 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+
+import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
+import { Clock, Loader2 } from 'lucide-react';
 import { getData } from '../../../../../services/apiClient';
 import { ENDPOINTS } from '../../../../../constants/apiEndpoints';
-import { Loader2 } from 'lucide-react';
+import {
+  dashboardService,
+  formatDurationSeconds,
+  isEvaluationPendingError,
+  normalizeAttemptResult,
+} from '../../../../../services/dashboardService';
+import type { AttemptResultDetail, QuestionReviewItem } from '../../../../../types/dashboard';
 import './reviewInterface.css';
 
 export default function ReviewPage() {
@@ -11,27 +20,67 @@ export default function ReviewPage() {
   const params = useParams();
   const attemptId = params.attemptId as string;
 
-  const [reviewData, setReviewData] = useState<any>(null);
+  const [reviewData, setReviewData] = useState<AttemptResultDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState<'all' | 'correct' | 'wrong' | 'skipped'>('all');
+
+  const fetchReview = useCallback(async () => {
+    if (!attemptId) return;
+    try {
+      const resultDetail = await dashboardService.getAttemptResult(attemptId);
+      setPendingMessage(null);
+      setError(null);
+      if (resultDetail.questions.length > 0) {
+        setReviewData(resultDetail);
+        return;
+      }
+
+      // Fallback to legacy answers endpoint only if result endpoint omitted questions
+      try {
+        const legacyRaw = await getData(`${ENDPOINTS.ATTEMPTS}/${attemptId}/answers`);
+        const merged = normalizeAttemptResult({
+          ...(typeof legacyRaw === 'object' && legacyRaw ? legacyRaw : {}),
+          attemptId: resultDetail.attemptId,
+          testTitle: resultDetail.testTitle,
+          obtainedMarks: resultDetail.obtainedMarks,
+          totalMarks: resultDetail.totalMarks,
+          correctCount: resultDetail.correctCount,
+          wrongCount: resultDetail.wrongCount,
+          skippedCount: resultDetail.skippedCount,
+        });
+        setReviewData(merged);
+      } catch {
+        setReviewData(resultDetail);
+      }
+    } catch (err: unknown) {
+      const pending = isEvaluationPendingError(err);
+      if (pending.pending) {
+        setPendingMessage(pending.message);
+      } else {
+        setError('Failed to load question review data.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [attemptId]);
+
+  const handleRefresh = () => {
+    setIsLoading(true);
+    setPendingMessage(null);
+    setError(null);
+    void fetchReview();
+  };
 
   useEffect(() => {
-    const fetchReview = async () => {
-      try {
-        const data = await getData(`${ENDPOINTS.ATTEMPTS}/${attemptId}/answers`);
-        setReviewData(data);
-      } catch (err: any) {
-        const errData = err.response?.data;
-        setError(typeof errData === 'string' ? errData : errData?.message || 'Failed to fetch review data');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    if (attemptId) fetchReview();
-  }, [attemptId]);
+    const timer = setTimeout(() => {
+      void fetchReview();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchReview]);
 
   const backToResult = () => {
     router.push(`/dashboard/results/${attemptId}`);
@@ -39,22 +88,50 @@ export default function ReviewPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-40 min-h-screen bg-[#f6f7fb]">
+      <div className="flex flex-col items-center justify-center py-40 min-h-[60vh]">
         <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
-        <p className="text-gray-500 font-medium">Loading review...</p>
+        <p className="text-slate-500 font-medium">Loading question-wise review...</p>
+      </div>
+    );
+  }
+
+  if (pendingMessage) {
+    return (
+      <div className="max-w-xl mx-auto py-16">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center">
+          <Clock size={32} className="mx-auto mb-3 text-amber-700" />
+          <h2 className="text-lg font-bold text-amber-900">Evaluation Pending</h2>
+          <p className="mt-2 text-sm text-amber-800">{pendingMessage}</p>
+          <div className="mt-6 flex justify-center gap-3">
+            <button
+              type="button"
+              onClick={handleRefresh}
+              className="rounded-xl bg-amber-600 px-4 py-2 text-xs font-semibold text-white hover:bg-amber-700 cursor-pointer"
+            >
+              Refresh
+            </button>
+            <Link
+              href="/dashboard/results"
+              className="rounded-xl border border-amber-300 bg-white px-4 py-2 text-xs font-semibold text-amber-900"
+            >
+              Back to Results
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error || !reviewData) {
     return (
-      <div className="max-w-2xl mx-auto py-20 min-h-screen bg-[#f6f7fb]">
-        <div className="bg-red-50 text-red-600 p-6 rounded-xl border border-red-100 text-center">
+      <div className="max-w-xl mx-auto py-16">
+        <div className="bg-rose-50 text-rose-700 p-6 rounded-2xl border border-rose-200 text-center">
           <h2 className="font-bold text-lg mb-2">Error</h2>
-          <p>{error || 'No review data found'}</p>
-          <button 
+          <p className="text-sm">{error || 'No review data found'}</p>
+          <button
+            type="button"
             onClick={backToResult}
-            className="mt-4 bg-red-100 text-red-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-200"
+            className="mt-4 bg-rose-100 text-rose-800 px-4 py-2 rounded-xl text-xs font-semibold hover:bg-rose-200 cursor-pointer"
           >
             Go Back
           </button>
@@ -63,277 +140,269 @@ export default function ReviewPage() {
     );
   }
 
-  const { questions = [] } = reviewData;
+  const questions = reviewData.questions;
   const totalQuestions = questions.length;
-  const qData = questions[currentQuestionIdx];
+  const qData: QuestionReviewItem | undefined = questions[currentQuestionIdx];
 
-  const loadQuestion = (idx: number) => {
-    setCurrentQuestionIdx(idx);
-  };
-
-  const nextQuestion = () => {
-    if (currentQuestionIdx < totalQuestions - 1) {
-      setCurrentQuestionIdx(prev => prev + 1);
-    }
-  };
-
-  const previousQuestion = () => {
-    if (currentQuestionIdx > 0) {
-      setCurrentQuestionIdx(prev => prev - 1);
-    }
-  };
-
-  const handleFilter = (status: string) => {
-    setFilter(status);
-  };
-
-  const getStatus = (q: any) => {
-    if (q.is_skipped) return 'skipped';
-    return q.is_correct ? 'correct' : 'wrong';
+  const getStatus = (q: QuestionReviewItem): 'correct' | 'wrong' | 'skipped' => {
+    if (q.isSkipped) return 'skipped';
+    return q.isCorrect ? 'correct' : 'wrong';
   };
 
   const currentStatus = qData ? getStatus(qData) : 'skipped';
 
   return (
-    <div className="min-h-screen bg-[#f6f7fb] text-[#172033]">
-      {/* HEADER */}
+    <div className="text-[#172033]">
       <header className="header">
         <div className="brand">
           <div className="logo">Q</div>
           <div className="brand-info">
             <h2>Quizly</h2>
-            <span>Answer Review</span>
+            <span>Question-wise Review</span>
           </div>
         </div>
-        <button className="back-btn" onClick={backToResult}>
+        <button type="button" className="back-btn" onClick={backToResult}>
           ← Back to Result
         </button>
       </header>
 
-      {/* MAIN */}
       <main className="container">
-        {/* PAGE HEADER */}
         <div className="page-header">
           <div>
-            <h1>Review Answers</h1>
-            <p>{reviewData.test_title || 'Mathematics'} · Attempt #{attemptId}</p>
+            <h1>Review Answers &amp; Explanations</h1>
+            <p>
+              {reviewData.testTitle} · Attempt #{attemptId} · Time Spent:{' '}
+              {formatDurationSeconds(reviewData.timeSpentSeconds)}
+            </p>
           </div>
           <div className="progress-info">
-            <strong>{currentQuestionIdx + 1} / {totalQuestions}</strong>
+            <strong>
+              {totalQuestions > 0 ? currentQuestionIdx + 1 : 0} / {totalQuestions}
+            </strong>
             <span>Questions Reviewed</span>
           </div>
         </div>
 
-        {/* REVIEW LAYOUT */}
-        <div className="review-layout">
-          {/* QUESTION NAV */}
-          <aside className="question-nav">
-            <div className="nav-header">
-              <h3>Questions</h3>
-              <span>{totalQuestions} Total</span>
-            </div>
+        {totalQuestions === 0 ? (
+          <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
+            No question-wise breakdown is available for this attempt.
+          </div>
+        ) : (
+          <div className="review-layout">
+            <aside className="question-nav">
+              <div className="nav-header">
+                <h3>Questions</h3>
+                <span>{totalQuestions} Total</span>
+              </div>
 
-            {/* FILTER */}
-            <div className="status-filter">
-              <button
-                className={`filter-chip ${filter === 'all' ? 'active' : ''}`}
-                onClick={() => handleFilter('all')}
-              >
-                All
-              </button>
-              <button
-                className={`filter-chip ${filter === 'correct' ? 'active' : ''}`}
-                onClick={() => handleFilter('correct')}
-              >
-                Correct
-              </button>
-              <button
-                className={`filter-chip ${filter === 'wrong' ? 'active' : ''}`}
-                onClick={() => handleFilter('wrong')}
-              >
-                Wrong
-              </button>
-              <button
-                className={`filter-chip ${filter === 'skipped' ? 'active' : ''}`}
-                onClick={() => handleFilter('skipped')}
-              >
-                Skip
-              </button>
-            </div>
-
-            {/* QUESTION NUMBERS */}
-            <div className="question-grid">
-              {questions.map((q: any, idx: number) => {
-                const status = getStatus(q);
-                const isVisible = filter === 'all' || status === filter;
-                const isActive = currentQuestionIdx === idx;
-                
-                if (!isVisible) return null;
-
-                return (
+              <div className="status-filter">
+                {(['all', 'correct', 'wrong', 'skipped'] as const).map((chip) => (
                   <button
-                    key={q.question_id}
-                    className={`question-number ${status} ${isActive ? 'active' : ''}`}
-                    onClick={() => loadQuestion(idx)}
+                    key={chip}
+                    type="button"
+                    className={`filter-chip ${filter === chip ? 'active' : ''}`}
+                    onClick={() => setFilter(chip)}
                   >
-                    {q.question_number}
+                    {chip === 'skipped'
+                      ? 'Skip'
+                      : chip.charAt(0).toUpperCase() + chip.slice(1)}
                   </button>
-                );
-              })}
-            </div>
+                ))}
+              </div>
 
-            {/* LEGEND */}
-            <div className="legend">
-              <div className="legend-item">
-                <div className="legend-dot correct"></div>
-                Correct
+              <div className="question-grid">
+                {questions.map((q, idx) => {
+                  const status = getStatus(q);
+                  if (filter !== 'all' && status !== filter) return null;
+                  return (
+                    <button
+                      key={`${q.questionId}-${idx}`}
+                      type="button"
+                      className={`question-number ${status} ${
+                        currentQuestionIdx === idx ? 'active' : ''
+                      }`}
+                      onClick={() => setCurrentQuestionIdx(idx)}
+                    >
+                      {q.questionNumber}
+                    </button>
+                  );
+                })}
               </div>
-              <div className="legend-item">
-                <div className="legend-dot wrong"></div>
-                Incorrect
-              </div>
-              <div className="legend-item">
-                <div className="legend-dot skipped"></div>
-                Skipped
-              </div>
-            </div>
-          </aside>
 
-          {/* QUESTION CONTENT */}
-          <section>
-            {qData && (
-              <div className="question-card">
-                {/* QUESTION TOP */}
-                <div className="question-top">
-                  <div className="question-title">
-                    <strong>Question {qData.question_number}</strong>
-                    <span className={`status-badge ${currentStatus}`}>
-                      {currentStatus === 'correct' ? '✓ Correct' : currentStatus === 'wrong' ? '✕ Incorrect' : '○ Skipped'}
+              <div className="legend">
+                <div className="legend-item">
+                  <div className="legend-dot correct" /> Correct
+                </div>
+                <div className="legend-item">
+                  <div className="legend-dot wrong" /> Incorrect
+                </div>
+                <div className="legend-item">
+                  <div className="legend-dot skipped" /> Skipped
+                </div>
+              </div>
+            </aside>
+
+            <section>
+              {qData && (
+                <div className="question-card">
+                  <div className="question-top">
+                    <div className="question-title">
+                      <strong>Question {qData.questionNumber}</strong>
+                      <span className={`status-badge ${currentStatus}`}>
+                        {currentStatus === 'correct'
+                          ? '✓ Correct'
+                          : currentStatus === 'wrong'
+                            ? '✕ Incorrect'
+                            : '○ Skipped'}
+                      </span>
+                    </div>
+                    <span className="marks">
+                      {qData.marksObtained > 0 ? '+' : ''}
+                      {qData.marksObtained} Marks
                     </span>
                   </div>
-                  <span className="marks">
-                    {qData.marks_obtained > 0 ? '+' : ''}{qData.marks_obtained} Marks
-                  </span>
-                </div>
 
-                {/* QUESTION BODY */}
-                <div className="question-body">
-                  <div className="question-category">
-                    {reviewData.test_title || 'General'}
-                  </div>
-                  <div className="question-text">
-                    {qData.question}
-                  </div>
+                  <div className="question-body">
+                    <div className="question-category">
+                      {qData.subjectName || reviewData.subjectName || reviewData.testTitle}
+                    </div>
+                    <div className="question-text">{qData.questionText}</div>
 
-                  {/* OPTIONS */}
-                  <div className="options">
-                    {qData.options.map((opt: any, index: number) => {
-                      const letter = String.fromCharCode(65 + index);
-                      const isCorrectAnswer = opt.id === qData.correct_answer;
-                      const isUserAnswer = opt.id === qData.user_answer;
-                      
-                      let optionClass = '';
-                      if (isCorrectAnswer) {
-                        optionClass = 'correct-answer';
-                      } else if (isUserAnswer && !qData.is_correct) {
-                        optionClass = 'user-wrong';
-                      }
+                    <div className="options">
+                      {qData.options.map((opt, index) => {
+                        const letter = String.fromCharCode(65 + index);
+                        const isCorrectAnswer = opt.id === qData.correctAnswerId;
+                        const isUserAnswer = opt.id === qData.userAnswerId;
 
-                      return (
-                        <div key={opt.id} className={`option ${optionClass}`}>
-                          <div className="option-letter">{letter}</div>
-                          <div className="option-text">{opt.text}</div>
-                          {isCorrectAnswer && <span className="answer-label">✓ Correct Answer</span>}
-                          {isUserAnswer && !qData.is_correct && <span className="wrong-label">✕ Your Answer</span>}
+                        let optionClass = '';
+                        if (isCorrectAnswer) optionClass = 'correct-answer';
+                        else if (isUserAnswer && !qData.isCorrect) optionClass = 'user-wrong';
+
+                        return (
+                          <div key={opt.id} className={`option ${optionClass}`}>
+                            <div className="option-letter">{letter}</div>
+                            <div className="option-text">{opt.text}</div>
+                            {isCorrectAnswer && (
+                              <span className="answer-label">✓ Correct Answer</span>
+                            )}
+                            {isUserAnswer && !qData.isCorrect && (
+                              <span className="wrong-label">✕ Your Answer</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {qData.explanation && (
+                      <div className="answer-info-box">
+                        <div className="answer-info-title">
+                          <span>💡</span>
+                          <strong>Explanation</strong>
                         </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* EXPLANATION */}
-                  {qData.explanation && (
-                    <div className="answer-info-box">
-                      <div className="answer-info-title">
-                        <span>💡</span>
-                        <strong>Explanation</strong>
+                        <p>{qData.explanation}</p>
                       </div>
-                      <p>{qData.explanation}</p>
-                    </div>
-                  )}
+                    )}
 
-                  {/* META */}
-                  <div className="question-meta">
-                    <div className="meta">
-                      <span>YOUR ANSWER</span>
-                      <strong>
-                        {qData.user_answer 
-                          ? String.fromCharCode(65 + qData.options.findIndex((o:any) => o.id === qData.user_answer)) 
-                          : 'None'}
-                      </strong>
-                    </div>
-                    <div className="meta">
-                      <span>CORRECT ANSWER</span>
-                      <strong>
-                        {qData.correct_answer 
-                          ? String.fromCharCode(65 + qData.options.findIndex((o:any) => o.id === qData.correct_answer)) 
-                          : 'None'}
-                      </strong>
-                    </div>
-                    <div className="meta">
-                      <span>TIME TAKEN</span>
-                      <strong>{qData.time_taken_seconds || 0} sec</strong>
-                    </div>
-                    <div className="meta">
-                      <span>MARKS</span>
-                      <strong>
-                        {qData.marks_obtained > 0 ? '+' : ''}{qData.marks_obtained}
-                      </strong>
+                    <div className="question-meta">
+                      <div className="meta">
+                        <span>YOUR ANSWER</span>
+                        <strong>
+                          {qData.userAnswerId
+                            ? (() => {
+                                const idx = qData.options.findIndex(
+                                  (o) => o.id === qData.userAnswerId,
+                                );
+                                return idx >= 0
+                                  ? String.fromCharCode(65 + idx)
+                                  : qData.userAnswerText || 'Selected';
+                              })()
+                            : 'Skipped'}
+                        </strong>
+                      </div>
+                      <div className="meta">
+                        <span>CORRECT ANSWER</span>
+                        <strong>
+                          {qData.correctAnswerId
+                            ? (() => {
+                                const idx = qData.options.findIndex(
+                                  (o) => o.id === qData.correctAnswerId,
+                                );
+                                return idx >= 0
+                                  ? String.fromCharCode(65 + idx)
+                                  : qData.correctAnswerText || 'N/A';
+                              })()
+                            : 'N/A'}
+                        </strong>
+                      </div>
+                      <div className="meta">
+                        <span>TIME SPENT</span>
+                        <strong>{formatDurationSeconds(qData.timeSpentSeconds)}</strong>
+                      </div>
+                      <div className="meta">
+                        <span>MARKS</span>
+                        <strong>
+                          {qData.marksObtained > 0 ? '+' : ''}
+                          {qData.marksObtained}
+                        </strong>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* FOOTER */}
-                <div className="question-footer">
-                  <button className="nav-btn" onClick={previousQuestion} disabled={currentQuestionIdx === 0}>
-                    ← Previous
-                  </button>
-                  <span className="question-position">
-                    Question {currentQuestionIdx + 1} of {totalQuestions}
-                  </span>
-                  <button className="nav-btn primary" onClick={nextQuestion} disabled={currentQuestionIdx === totalQuestions - 1}>
-                    Next →
-                  </button>
+                  <div className="question-footer">
+                    <button
+                      type="button"
+                      className="nav-btn"
+                      onClick={() => setCurrentQuestionIdx((p) => Math.max(0, p - 1))}
+                      disabled={currentQuestionIdx === 0}
+                    >
+                      ← Previous
+                    </button>
+                    <span className="question-position">
+                      Question {currentQuestionIdx + 1} of {totalQuestions}
+                    </span>
+                    <button
+                      type="button"
+                      className="nav-btn primary"
+                      onClick={() =>
+                        setCurrentQuestionIdx((p) => Math.min(totalQuestions - 1, p + 1))
+                      }
+                      disabled={currentQuestionIdx === totalQuestions - 1}
+                    >
+                      Next →
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* SUMMARY */}
-            <div className="summary-card">
-              <div className="summary-header">
-                <h2>Test Summary</h2>
-                <span>{reviewData.test_title || 'Mathematics'}</span>
+              <div className="summary-card">
+                <div className="summary-header">
+                  <h2>Test Summary</h2>
+                  <span>{reviewData.testTitle}</span>
+                </div>
+                <div className="summary-grid">
+                  <div className="summary-item">
+                    <strong>{reviewData.correctCount}</strong>
+                    <span>Correct</span>
+                  </div>
+                  <div className="summary-item">
+                    <strong>{reviewData.wrongCount}</strong>
+                    <span>Incorrect</span>
+                  </div>
+                  <div className="summary-item">
+                    <strong>{reviewData.skippedCount}</strong>
+                    <span>Skipped</span>
+                  </div>
+                  <div className="summary-item">
+                    <strong>
+                      {reviewData.obtainedMarks}/{reviewData.totalMarks}
+                    </strong>
+                    <span>Final Score</span>
+                  </div>
+                </div>
               </div>
-              <div className="summary-grid">
-                <div className="summary-item">
-                  <strong>{reviewData.correct_answers || 0}</strong>
-                  <span>Correct</span>
-                </div>
-                <div className="summary-item">
-                  <strong>{reviewData.wrong_answers || 0}</strong>
-                  <span>Incorrect</span>
-                </div>
-                <div className="summary-item">
-                  <strong>{reviewData.skipped_answers !== undefined ? reviewData.skipped_answers : (reviewData.total_questions - (reviewData.correct_answers + reviewData.wrong_answers)) || 0}</strong>
-                  <span>Skipped</span>
-                </div>
-                <div className="summary-item">
-                  <strong>{reviewData.obtained_marks || 0}/{reviewData.total_marks || (reviewData.total_questions ? reviewData.total_questions * 4 : 0)}</strong>
-                  <span>Final Score</span>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
+            </section>
+          </div>
+        )}
       </main>
     </div>
   );

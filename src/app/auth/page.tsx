@@ -1,20 +1,25 @@
-'use client';
-import { useState, useEffect, Suspense } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { loginUser, registerUser, selectAuthLoading, selectAuthError } from './authSlice';
-import { AppDispatch } from '../../store/store';
-import { useRouter, useSearchParams } from 'next/navigation';
-import './auth.css';
-import { Loader2 } from 'lucide-react';
+"use client";
+import { useState, useEffect, Suspense } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  loginUser,
+  registerUser,
+  selectAuthLoading,
+  selectAuthError,
+} from "./authSlice";
+import { AppDispatch } from "../../store/store";
+import { useRouter, useSearchParams } from "next/navigation";
+import "./auth.css";
+import { Loader2 } from "lucide-react";
 
 function AuthContent() {
   const searchParams = useSearchParams();
-  const initialTab = searchParams.get('tab') === 'signup' ? 'signup' : 'login';
-  const [activeTab, setActiveTab] = useState<'login' | 'signup'>(initialTab);
+  const initialTab = searchParams.get("tab") === "signup" ? "signup" : "login";
+  const [activeTab, setActiveTab] = useState<"login" | "signup">(initialTab);
 
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const dispatch = useDispatch<AppDispatch>();
   const isLoading = useSelector(selectAuthLoading);
@@ -23,17 +28,17 @@ function AuthContent() {
 
   // Reset form when switching tabs
   useEffect(() => {
-    setUsername('');
-    setPassword('');
-    setConfirmPassword('');
+    setUsername("");
+    setPassword("");
+    setConfirmPassword("");
   }, [activeTab]);
 
   const handleLogin = async (e: React.FormEvent) => {
-    console.log('========>',username, password);
+    console.log("========>", username, password);
     e.preventDefault();
     const resultAction = await dispatch(loginUser({ username, password }));
     if (loginUser.fulfilled.match(resultAction)) {
-      router.push('/dashboard');
+      router.push("/dashboard");
     }
   };
 
@@ -45,7 +50,7 @@ function AuthContent() {
     }
     const resultAction = await dispatch(registerUser({ username, password }));
     if (registerUser.fulfilled.match(resultAction)) {
-      router.push('/dashboard');
+      router.push("/dashboard");
     }
   };
 
@@ -59,7 +64,6 @@ function AuthContent() {
 
       <main className="auth-page-container">
         <div className="auth-wrapper">
-          
           {/* LEFT PANEL */}
           <section className="auth-left-panel">
             <div>
@@ -70,10 +74,13 @@ function AuthContent() {
 
               <div className="auth-hero-content">
                 <h1>
-                  Learn smarter.<br /><span>Test better.</span>
+                  Learn smarter.
+                  <br />
+                  <span>Test better.</span>
                 </h1>
                 <p>
-                  Challenge yourself with curated tests, track your performance and improve your knowledge every day.
+                  Challenge yourself with curated tests, track your performance
+                  and improve your knowledge every day.
                 </p>
 
                 <div className="auth-stats">
@@ -105,7 +112,7 @@ function AuthContent() {
               </div>
             </div>
 
-            <div style={{ color: '#64748b', fontSize: '12px' }}>
+            <div style={{ color: "#64748b", fontSize: "12px" }}>
               © 2026 Quizly. Learn. Practice. Achieve.
             </div>
           </section>
@@ -113,30 +120,37 @@ function AuthContent() {
           {/* RIGHT PANEL */}
           <section className="auth-right-panel">
             <div className="auth-form-container">
-              
               <div className="auth-form-header">
-                <h2>{activeTab === 'login' ? 'Welcome back' : 'Create your account'}</h2>
-                <p>{activeTab === 'login' ? 'Sign in to continue your learning journey.' : 'Start your journey and test your knowledge.'}</p>
+                <h2>
+                  {activeTab === "login"
+                    ? "Welcome back, User"
+                    : "Create your account"}
+                </h2>
+                <p>
+                  {activeTab === "login"
+                    ? "Sign in to continue your learning journey."
+                    : "Start your journey and test your knowledge."}
+                </p>
               </div>
 
               {/* Tabs */}
               <div className="auth-tabs">
                 <button
                   type="button"
-                  className={`auth-tab ${activeTab === 'login' ? 'active' : ''}`}
+                  className={`auth-tab ${activeTab === "login" ? "active" : ""}`}
                   onClick={() => {
-                    setActiveTab('login');
-                    router.replace('?tab=login', { scroll: false });
+                    setActiveTab("login");
+                    router.replace("?tab=login", { scroll: false });
                   }}
                 >
                   Login
                 </button>
                 <button
                   type="button"
-                  className={`auth-tab ${activeTab === 'signup' ? 'active' : ''}`}
+                  className={`auth-tab ${activeTab === "signup" ? "active" : ""}`}
                   onClick={() => {
-                    setActiveTab('signup');
-                    router.replace('?tab=signup', { scroll: false });
+                    setActiveTab("signup");
+                    router.replace("?tab=signup", { scroll: false });
                   }}
                 >
                   Sign Up
@@ -152,7 +166,7 @@ function AuthContent() {
 
               {/* LOGIN FORM */}
               <form
-                className={`auth-form ${activeTab === 'login' ? 'active' : ''}`}
+                className={`auth-form ${activeTab === "login" ? "active" : ""}`}
                 onSubmit={handleLogin}
               >
                 <div className="auth-field">
@@ -187,10 +201,16 @@ function AuthContent() {
                   <label className="auth-remember">
                     <input type="checkbox" /> Remember me
                   </label>
-                  <a href="#" className="auth-forgot">Forgot password?</a>
+                  <a href="#" className="auth-forgot">
+                    Forgot password?
+                  </a>
                 </div>
 
-                <button className="auth-submit-btn flex justify-center items-center gap-2" type="submit" disabled={isLoading}>
+                <button
+                  className="auth-submit-btn flex justify-center items-center gap-2"
+                  type="submit"
+                  disabled={isLoading}
+                >
                   {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                   Sign In →
                 </button>
@@ -204,7 +224,7 @@ function AuthContent() {
 
               {/* SIGN UP FORM */}
               <form
-                className={`auth-form ${activeTab === 'signup' ? 'active' : ''}`}
+                className={`auth-form ${activeTab === "signup" ? "active" : ""}`}
                 onSubmit={handleSignup}
               >
                 <div className="auth-field">
@@ -249,7 +269,11 @@ function AuthContent() {
                   </div>
                 </div>
 
-                <button className="auth-submit-btn flex justify-center items-center gap-2" type="submit" disabled={isLoading}>
+                <button
+                  className="auth-submit-btn flex justify-center items-center gap-2"
+                  type="submit"
+                  disabled={isLoading}
+                >
                   {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                   Create Account →
                 </button>
@@ -260,7 +284,6 @@ function AuthContent() {
                   <a href="#"> Privacy Policy</a>.
                 </div>
               </form>
-
             </div>
           </section>
         </div>
@@ -271,11 +294,13 @@ function AuthContent() {
 
 export default function AuthPage() {
   return (
-    <Suspense fallback={
-      <div className="flex h-screen w-full items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex h-screen w-full items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        </div>
+      }
+    >
       <AuthContent />
     </Suspense>
   );

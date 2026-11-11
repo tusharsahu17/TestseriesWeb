@@ -1,59 +1,115 @@
 'use client';
-import { useEffect, useState } from 'react';
+
+import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { ArrowLeft, Loader2, Search } from 'lucide-react';
 import { getData } from '../../../../../../services/apiClient';
 import { ENDPOINTS } from '../../../../../../constants/apiEndpoints';
-import { Loader2, Search } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
+import {
+  dashboardService,
+  normalizeAvailableTestsArray,
+} from '../../../../../../services/dashboardService';
+import type { AvailableTestItem, DashboardSummary } from '../../../../../../types/dashboard';
+import { TestCard } from '../../../../../../components/dashboard/TestCard';
+import { StartTestModal, useTestStarter } from '../../../../../../components/dashboard/StartTestModal';
 import './availableTests.css';
 
 export default function SubjectTestsPage() {
   const params = useParams();
-  const router = useRouter();
+  const examId = params.examId as string;
   const subjectId = params.subjectId as string;
-  
-  const [tests, setTests] = useState<any[]>([]);
+
+  const [tests, setTests] = useState<AvailableTestItem[]>([]);
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Filters
   const [search, setSearch] = useState('');
-  const [difficultyFilter, setDifficultyFilter] = useState('all');
-  const [activeTab, setActiveTab] = useState('all');
+  const [difficultyFilter, setDifficultyFilter] = useState('ALL');
 
-  useEffect(() => {
-    const fetchTests = async () => {
-      try {
-        const data = await getData(`${ENDPOINTS.SUBJECTS}/${subjectId}/tests`);
-        // Provide mock attributes if missing
-        const testsWithMeta = data.map((t: any) => ({
-          ...t,
-          difficulty: t.difficulty || ['easy', 'medium', 'hard'][Math.floor(Math.random() * 3)],
-          category: t.category || ['jee', 'neet', 'school', 'practice'][Math.floor(Math.random() * 4)],
-          attempts: t.attempts || Math.floor(Math.random() * 3000),
-        }));
-        setTests(testsWithMeta);
-      } catch (err: any) {
-        const errData = err.response?.data;
-        setError(typeof errData === 'string' ? errData : errData?.message || 'Failed to fetch tests');
-      } finally {
-        setIsLoading(false);
+  const fetchTests = useCallback(async () => {
+    if (!subjectId) return;
+    try {
+      const [subjectTestsRes, userTestsRes, summaryRes] = await Promise.allSettled([
+        getData<unknown>(`${ENDPOINTS.SUBJECTS}/${subjectId}/tests`),
+        dashboardService.getAvailableTests({ subjectId }),
+        dashboardService.getDashboardSummary(),
+      ]);
+
+      if (summaryRes.status === 'fulfilled') {
+        setSummary(summaryRes.value);
       }
-    };
-    if (subjectId) fetchTests();
+
+      const userTests = userTestsRes.status === 'fulfilled' ? userTestsRes.value.all : [];
+      const userTestsById = new Map<string, AvailableTestItem>(
+        userTests.map((t) => [t.id, t]),
+      );
+
+      let resolved: AvailableTestItem[] = [];
+      if (subjectTestsRes.status === 'fulfilled') {
+        resolved = normalizeAvailableTestsArray(subjectTestsRes.value).map((normalized) => {
+          const enriched = userTestsById.get(normalized.id);
+          return enriched
+            ? {
+                ...normalized,
+                ...enriched,
+                subjectName: enriched.subjectName || normalized.subjectName,
+              }
+            : normalized;
+        });
+      } else if (userTests.length > 0) {
+        resolved = userTests;
+      }
+
+      if (subjectTestsRes.status === 'rejected' && userTestsRes.status === 'rejected') {
+        throw new Error('Failed to fetch tests for this subject.');
+      }
+
+      setError(null);
+      setTests(resolved);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch tests');
+    } finally {
+      setIsLoading(false);
+    }
   }, [subjectId]);
 
-  const filteredTests = tests.filter(test => {
-    const textMatches = (test.name || test.title || '').toLowerCase().includes(search.toLowerCase());
-    const diffMatches = difficultyFilter === 'all' || test.difficulty === difficultyFilter;
-    const catMatches = activeTab === 'all' || test.category === activeTab;
-    return textMatches && diffMatches && catMatches;
-  });
-
-  const resetFilters = () => {
-    setSearch('');
-    setDifficultyFilter('all');
-    setActiveTab('all');
+  const handleRetry = () => {
+    setIsLoading(true);
+    setError(null);
+    void fetchTests();
   };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void fetchTests();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchTests]);
+
+  const {
+    startingTestId,
+    pendingTest,
+    validationError,
+    isAbandoning,
+    handleTestAction,
+    handleResumeConflict,
+    handleAbandonAndStart,
+    closeModal,
+  } = useTestStarter(fetchTests);
+
+  const filteredTests = tests.filter((test) => {
+    const q = search.trim().toLowerCase();
+    const textMatches =
+      !q ||
+      test.title.toLowerCase().includes(q) ||
+      test.subjectName.toLowerCase().includes(q);
+    const diffMatches =
+      difficultyFilter === 'ALL' ||
+      (test.difficulty || '').toLowerCase() === difficultyFilter.toLowerCase();
+    return textMatches && diffMatches;
+  });
 
   if (isLoading) {
     return (
@@ -64,139 +120,118 @@ export default function SubjectTestsPage() {
   }
 
   if (error) {
-    return <div className="text-red-600 p-4 bg-red-50 rounded-lg">{error}</div>;
+    return (
+      <div className="at-container">
+        <Link
+          href={`/dashboard/exams/${examId}/subjects`}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 mb-4"
+        >
+          <ArrowLeft size={14} /> Back to Exam Subjects
+        </Link>
+        <div className="text-rose-700 p-6 bg-rose-50 border border-rose-200 rounded-2xl text-center">
+          <p className="text-sm font-semibold">{error}</p>
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="mt-3 rounded-xl bg-rose-100 px-4 py-2 text-xs font-semibold hover:bg-rose-200 cursor-pointer"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="at-container">
-      
+      <div className="mb-4">
+        <Link
+          href={`/dashboard/exams/${examId}/subjects`}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+        >
+          <ArrowLeft size={14} /> Back to Exam Subjects
+        </Link>
+      </div>
+
       {/* HERO */}
-      <section className="at-hero">
+      <section className="at-hero flex-wrap gap-4">
         <div className="at-hero-content">
-          <h1>Available Tests</h1>
+          <h1>Subject Tests</h1>
           <p>Choose a test and start preparing for your next exam.</p>
         </div>
-        
+
         <div className="at-hero-stats">
           <div className="at-stat">
             <strong>{tests.length}</strong>
             <span>Available Tests</span>
           </div>
           <div className="at-stat">
-            <strong>08</strong>
+            <strong>{summary?.testsAttempted ?? 0}</strong>
             <span>Completed</span>
           </div>
           <div className="at-stat">
-            <strong>72%</strong>
+            <strong>{Number(summary?.averageScore ?? 0).toFixed(0)}%</strong>
             <span>Avg. Score</span>
           </div>
         </div>
       </section>
 
       {/* FILTER BAR */}
-      <div className="at-filter-bar">
+      <div className="at-filter-bar flex-wrap">
         <div className="at-search">
-          <Search className="at-search-icon" />
-          <input 
-            type="text" 
-            placeholder="Search tests..." 
+          <Search size={15} className="at-search-icon" />
+          <input
+            type="text"
+            placeholder="Search tests..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        
-        <select 
+
+        <select
           className="at-filter-select"
           value={difficultyFilter}
           onChange={(e) => setDifficultyFilter(e.target.value)}
         >
-          <option value="all">All Difficulty</option>
+          <option value="ALL">All Difficulty</option>
           <option value="easy">Easy</option>
           <option value="medium">Medium</option>
           <option value="hard">Hard</option>
         </select>
-        
-        <button className="at-filter-btn" onClick={resetFilters}>
-          Reset
-        </button>
-      </div>
 
-      {/* CATEGORY TABS */}
-      <div className="at-tabs">
-        {[
-          { id: 'all', label: 'All Tests' },
-          { id: 'jee', label: 'JEE Main' },
-          { id: 'neet', label: 'NEET' },
-          { id: 'school', label: 'School Exams' },
-          { id: 'practice', label: 'Practice' },
-        ].map(tab => (
-          <button 
-            key={tab.id}
-            className={`at-tab ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
+        {(search || difficultyFilter !== 'ALL') && (
+          <button
+            type="button"
+            className="at-filter-btn"
+            onClick={() => {
+              setSearch('');
+              setDifficultyFilter('ALL');
+            }}
           >
-            {tab.label}
+            Reset
           </button>
-        ))}
+        )}
       </div>
 
       {/* SECTION HEADER */}
       <div className="at-section-header">
-        <h2>Recommended Tests</h2>
+        <h2>Tests</h2>
         <span>{filteredTests.length} Tests</span>
       </div>
 
       {/* TEST GRID */}
       {filteredTests.length > 0 ? (
-        <div className="at-test-grid">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredTests.map((test) => (
-            <div key={test.id || test._id} className="at-test-card">
-              
-              <div className="at-card-top">
-                <div className="at-subject-icon">📝</div>
-                <span className={`at-difficulty ${test.difficulty}`}>
-                  {(test.difficulty || 'MEDIUM').toUpperCase()}
-                </span>
-              </div>
-              
-              <h3>{test.name || test.title || 'Practice Test'}</h3>
-              
-              <p className="at-test-description">
-                {test.description || 'Test your understanding and challenge your knowledge with this comprehensive test.'}
-              </p>
-              
-              <div className="at-test-meta">
-                <div className="at-meta-item">
-                  <strong>{test.total_questions || test.totalQuestions || 20}</strong>
-                  <span>Questions</span>
-                </div>
-                <div className="at-meta-item">
-                  <strong>{test.duration_minutes || test.durationMinutes || 30} Min</strong>
-                  <span>Duration</span>
-                </div>
-                <div className="at-meta-item">
-                  <strong>{(test.total_questions || test.totalQuestions || 20) * 4}</strong>
-                  <span>Marks</span>
-                </div>
-              </div>
-              
-              <div className="at-card-footer">
-                <span className="at-attempt-info">
-                  {test.attempts?.toLocaleString()} students attempted
-                </span>
-                <button 
-                  className="at-start-btn"
-                  onClick={() => router.push(`/dashboard/tests/${test.id || test._id}`)}
-                >
-                  Start Test →
-                </button>
-              </div>
-              
-            </div>
+            <TestCard
+              key={test.id}
+              test={test}
+              isStarting={startingTestId === test.id}
+              onAction={handleTestAction}
+            />
           ))}
         </div>
       ) : (
-        /* EMPTY STATE */
         <div className="at-empty-state">
           <div className="at-empty-icon">🔍</div>
           <h3>No tests found</h3>
@@ -204,6 +239,14 @@ export default function SubjectTestsPage() {
         </div>
       )}
 
+      <StartTestModal
+        test={pendingTest}
+        error={validationError}
+        isAbandoning={isAbandoning}
+        onResumeConflict={handleResumeConflict}
+        onAbandonAndStart={handleAbandonAndStart}
+        onClose={closeModal}
+      />
     </div>
   );
 }

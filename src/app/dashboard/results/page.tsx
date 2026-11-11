@@ -1,113 +1,256 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { getData } from '@/services/apiClient';
-import { ENDPOINTS } from '@/constants/apiEndpoints';
+import {
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Loader2,
+  Search,
+} from 'lucide-react';
+import {
+  dashboardService,
+  formatDisplayDate,
+  formatDurationSeconds,
+} from '../../../services/dashboardService';
+import type { PaginationMeta, RecentAttemptItem } from '../../../types/dashboard';
 
-// Define a type for Attempt, adjust based on actual API response
-interface Attempt {
-  id: number;
-  test_id: number;
-  user_id: number;
-  start_time: string;
-  end_time: string;
-  score: number;
-  status: string;
-  // If the backend joins with the test to give test title
-  test?: {
-    id: number;
-    title: string;
-    subject?: {
-      name: string;
-    }
-  };
-}
+const PAGE_SIZE = 10;
 
-export default function ResultsPage() {
+export default function ResultsHistoryPage() {
   const router = useRouter();
-  const [attempts, setAttempts] = useState<Attempt[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [attempts, setAttempts] = useState<RecentAttemptItem[]>([]);
+  const [pagination, setPagination] = useState<PaginationMeta>({
+    page: 1,
+    limit: PAGE_SIZE,
+    total: 0,
+    totalPages: 1,
+  });
+
+  const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [subjectFilter, setSubjectFilter] = useState('ALL');
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const loadAttempts = useCallback(async () => {
+    try {
+      const res = await dashboardService.getAllAttempts({
+        page,
+        limit: PAGE_SIZE,
+        search: searchQuery || undefined,
+        status: statusFilter !== 'ALL' ? statusFilter : undefined,
+        subject: subjectFilter !== 'ALL' ? subjectFilter : undefined,
+      });
+      setError(null);
+      setAttempts(res.attempts);
+      setPagination(res.pagination);
+    } catch {
+      setError('Failed to load your test attempt history.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [page, searchQuery, statusFilter, subjectFilter]);
+
+  const handleRetry = () => {
+    setIsLoading(true);
+    setError(null);
+    void loadAttempts();
+  };
+
   useEffect(() => {
-    const fetchAttempts = async () => {
-      try {
-        setLoading(true);
-        // Using the user_id from token is handled by the backend typically.
-        // Assuming /api/attempts returns all attempts for the current user.
-        const data = await getData(ENDPOINTS.ATTEMPTS);
-        
-        // Sometimes backend wraps response in { attempts: [...] } or { data: [...] }
-        if (Array.isArray(data)) {
-           setAttempts(data);
-        } else if (data.attempts && Array.isArray(data.attempts)) {
-           setAttempts(data.attempts);
-        } else if (data.data && Array.isArray(data.data)) {
-           setAttempts(data.data);
-        } else {
-           console.warn("Unexpected API response structure for attempts:", data);
-           setAttempts([]);
-        }
-      } catch (err: any) {
-        console.error('Failed to fetch attempts:', err);
-        setError('Failed to load your test results. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
+    const timer = setTimeout(() => {
+      void loadAttempts();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [loadAttempts]);
 
-    fetchAttempts();
-  }, []);
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setPage(1);
+    setSearchQuery(searchInput.trim());
+  };
 
-  if (loading) {
+  // Client-side fallback filter if backend ignores search/subject query params
+  const visibleAttempts = attempts.filter((att) => {
+    const q = searchQuery.toLowerCase();
+    const matchesSearch =
+      !q ||
+      att.testTitle.toLowerCase().includes(q) ||
+      att.subjectName.toLowerCase().includes(q) ||
+      (att.seriesTitle || '').toLowerCase().includes(q);
+    const matchesStatus =
+      statusFilter === 'ALL' ||
+      att.status === statusFilter ||
+      att.evaluationStatus === statusFilter;
+    const matchesSubject = subjectFilter === 'ALL' || att.subjectName === subjectFilter;
+    return matchesSearch && matchesStatus && matchesSubject;
+  });
+
+  const subjects = Array.from(new Set(attempts.map((a) => a.subjectName).filter(Boolean)));
+
+  const renderStatusBadge = (attempt: RecentAttemptItem) => {
+    const st = (attempt.evaluationStatus || attempt.status).toUpperCase();
+    if (st === 'PENDING_EVALUATION' || st === 'EVALUATION_PENDING') {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-[10px] font-semibold text-amber-700">
+          <Clock size={10} /> Pending Evaluation
+        </span>
+      );
+    }
+    if (st === 'IN_PROGRESS') {
+      return (
+        <span className="inline-flex items-center rounded-full bg-sky-50 border border-sky-200 px-2.5 py-0.5 text-[10px] font-semibold text-sky-700">
+          In Progress
+        </span>
+      );
+    }
+    if (st === 'ABANDONED' || st === 'CANCELLED' || st === 'INVALID') {
+      return (
+        <span className="inline-flex items-center rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-[10px] font-semibold text-slate-600">
+          {st}
+        </span>
+      );
+    }
     return (
-      <div className="dashboard-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-        <div className="spinner" style={{ width: '40px', height: '40px', border: '4px solid #f3f3f3', borderTop: '4px solid #6c5ce7', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-        <style jsx>{`
-          @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        `}</style>
-      </div>
+      <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+        Evaluated
+      </span>
     );
-  }
-
-  if (error) {
-    return (
-      <div className="dashboard-content">
-        <div className="dashboard-card" style={{ padding: '2rem', textAlign: 'center', color: '#e74c3c' }}>
-          <h2>Oops!</h2>
-          <p>{error}</p>
-          <button className="dashboard-continue-btn" onClick={() => window.location.reload()} style={{ marginTop: '1rem' }}>
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
+  };
 
   return (
-    <>
+    <div className="space-y-6">
       <div className="dashboard-welcome">
         <div>
-          <h1>Your Results 📊</h1>
-          <p>Review your past test attempts and track your progress.</p>
+          <h1>Attempts &amp; Results</h1>
+          <p>Review your evaluated test attempts, marks, accuracy, and detailed explanations.</p>
         </div>
+        <Link
+          href="/dashboard/performance"
+          className="dashboard-date-btn font-semibold text-indigo-600 no-underline hover:bg-slate-50"
+        >
+          Performance Analytics →
+        </Link>
       </div>
+
+      {/* Filters Toolbar */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+        <form onSubmit={handleSearchSubmit} className="flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 min-w-[220px]">
+            <Search
+              size={15}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search test title, subject, or series..."
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-xs text-slate-800 outline-none focus:border-indigo-400 focus:bg-white"
+            />
+          </div>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
+            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 outline-none focus:border-indigo-400"
+          >
+            <option value="ALL">All Evaluated</option>
+            <option value="EVALUATED">Evaluated</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="PENDING_EVALUATION">Pending Evaluation</option>
+          </select>
+
+          {subjects.length > 0 && (
+            <select
+              value={subjectFilter}
+              onChange={(e) => {
+                setSubjectFilter(e.target.value);
+                setPage(1);
+              }}
+              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 outline-none focus:border-indigo-400"
+            >
+              <option value="ALL">All Subjects</option>
+              {subjects.map((subj) => (
+                <option key={subj} value={subj}>
+                  {subj}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <button
+            type="submit"
+            className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700 cursor-pointer"
+          >
+            Apply
+          </button>
+
+          {(searchQuery || statusFilter !== 'ALL' || subjectFilter !== 'ALL') && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchInput('');
+                setSearchQuery('');
+                setStatusFilter('ALL');
+                setSubjectFilter('ALL');
+                setPage(1);
+              }}
+              className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+            >
+              Reset
+            </button>
+          )}
+        </form>
+      </div>
+
+      {error && (
+        <div className="flex items-center justify-between rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-700">
+          <span className="inline-flex items-center gap-2">
+            <AlertCircle size={18} />
+            {error}
+          </span>
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="rounded-lg bg-rose-100 px-3 py-1.5 text-xs font-semibold hover:bg-rose-200 cursor-pointer"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       <div className="dashboard-card">
         <div className="dashboard-card-header">
-          <h3>Test History</h3>
+          <h3>Attempt History</h3>
+          <span className="text-xs text-slate-400">{pagination.total} total</span>
         </div>
 
-        {attempts.length === 0 ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#a0aec0' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📝</div>
-            <p>You haven't taken any tests yet.</p>
-            <button 
-              className="dashboard-continue-btn" 
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mb-2" />
+            <p className="text-xs text-slate-500">Loading test history...</p>
+          </div>
+        ) : visibleAttempts.length === 0 ? (
+          <div className="py-12 text-center text-slate-500">
+            <p className="text-sm font-semibold text-slate-700">No attempts found</p>
+            <p className="mt-1 text-xs text-slate-400">
+              Take an available test to build your evaluated attempt history.
+            </p>
+            <button
+              type="button"
               onClick={() => router.push('/dashboard/tests')}
-              style={{ marginTop: '1rem' }}
+              className="mt-4 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700 cursor-pointer"
             >
               Browse Available Tests
             </button>
@@ -118,56 +261,67 @@ export default function ResultsPage() {
               <thead>
                 <tr>
                   <th>TEST</th>
-                  <th>DATE</th>
+                  <th>SUBJECT</th>
+                  <th>SUBMITTED</th>
+                  <th>MARKS</th>
                   <th>SCORE</th>
+                  <th>ACCURACY</th>
+                  <th>TIME</th>
                   <th>STATUS</th>
                   <th>ACTION</th>
                 </tr>
               </thead>
               <tbody>
-                {attempts.map((attempt) => {
-                  const testTitle = attempt.test?.title || `Test #${attempt.test_id}`;
-                  // const subjectName = attempt.test?.subject?.name || 'N/A';
-                  const date = new Date(attempt.start_time).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                  });
-                  
-                  const scoreValue = parseFloat(attempt.score as unknown as string);
-                  let scoreBadgeClass = 'dashboard-medium-score';
-                  if (scoreValue >= 80) scoreBadgeClass = 'dashboard-high-score';
-                  else if (scoreValue < 50) scoreBadgeClass = 'dashboard-low-score';
-
+                {visibleAttempts.map((attempt) => {
+                  const pct = Number(attempt.percentage);
+                  const scoreBadgeClass =
+                    pct >= 80
+                      ? 'dashboard-high-score'
+                      : pct >= 50
+                        ? 'dashboard-medium-score'
+                        : 'dashboard-low-score';
+                  const isInProgress = attempt.status === 'IN_PROGRESS';
                   return (
                     <tr key={attempt.id}>
-                      <td className="dashboard-test-name">{testTitle}</td>
-                      <td className="dashboard-test-date">{date}</td>
-                      <td>
-                        {attempt.status === 'completed' ? (
-                          <span className={`dashboard-score-badge ${scoreBadgeClass}`}>
-                            {scoreValue}%
+                      <td className="dashboard-test-name">
+                        {attempt.testTitle}
+                        {attempt.seriesTitle && (
+                          <span className="block text-[10px] font-normal text-slate-400">
+                            {attempt.seriesTitle}
                           </span>
-                        ) : (
-                          <span style={{ color: '#a0aec0' }}>--</span>
                         )}
                       </td>
-                      <td>
-                        <span style={{ 
-                          textTransform: 'capitalize',
-                          color: attempt.status === 'completed' ? '#2ecc71' : '#f39c12'
-                        }}>
-                          {attempt.status}
-                        </span>
+                      <td>{attempt.subjectName}</td>
+                      <td className="dashboard-test-date">
+                        {formatDisplayDate(attempt.submittedAt || attempt.startedAt)}
                       </td>
                       <td>
-                        <Link 
-                          href={`/dashboard/results/${attempt.id}`}
-                          className="dashboard-view-all"
-                          style={{ textDecoration: 'none', padding: '6px 12px', background: '#f8f9fa', borderRadius: '4px', color: '#6c5ce7', fontWeight: 600 }}
-                        >
-                          View Results
-                        </Link>
+                        {attempt.obtainedMarks} / {attempt.totalMarks}
+                      </td>
+                      <td>
+                        <span className={`dashboard-score-badge ${scoreBadgeClass}`}>
+                          {pct.toFixed(1)}%
+                        </span>
+                      </td>
+                      <td>{Number(attempt.accuracy).toFixed(1)}%</td>
+                      <td>{formatDurationSeconds(attempt.timeSpentSeconds)}</td>
+                      <td>{renderStatusBadge(attempt)}</td>
+                      <td>
+                        {isInProgress && attempt.testId ? (
+                          <Link
+                            href={`/dashboard/tests/${attempt.testId}?attemptId=${attempt.attemptId}`}
+                            className="dashboard-view-all"
+                          >
+                            Resume →
+                          </Link>
+                        ) : (
+                          <Link
+                            href={`/dashboard/results/${attempt.attemptId}`}
+                            className="dashboard-view-all"
+                          >
+                            View Result →
+                          </Link>
+                        )}
                       </td>
                     </tr>
                   );
@@ -177,6 +331,33 @@ export default function ResultsPage() {
           </div>
         )}
       </div>
-    </>
+
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs">
+          <span className="text-slate-500">
+            Page {pagination.page} of {pagination.totalPages} ({pagination.total} results)
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 font-semibold text-slate-700 disabled:opacity-50 cursor-pointer"
+            >
+              <ChevronLeft size={14} /> Prev
+            </button>
+            <button
+              type="button"
+              disabled={page >= pagination.totalPages}
+              onClick={() => setPage((p) => p + 1)}
+              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 font-semibold text-slate-700 disabled:opacity-50 cursor-pointer"
+            >
+              Next <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

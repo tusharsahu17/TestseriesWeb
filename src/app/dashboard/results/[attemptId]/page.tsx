@@ -1,9 +1,20 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { getData } from '../../../../services/apiClient';
-import { ENDPOINTS } from '../../../../constants/apiEndpoints';
-import { Loader2 } from 'lucide-react';
+
+import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { ArrowLeft, Clock, Loader2 } from 'lucide-react';
+import {
+  dashboardService,
+  formatDisplayDate,
+  formatDurationSeconds,
+  isEvaluationPendingError,
+} from '../../../../services/dashboardService';
+import type { AttemptResultDetail } from '../../../../types/dashboard';
+import {
+  getPerformanceBarClass,
+  PerformanceStatusBadge,
+} from '../../../../components/dashboard/StatusBadges';
 import './resultInterface.css';
 
 export default function ResultPage() {
@@ -11,122 +22,187 @@ export default function ResultPage() {
   const router = useRouter();
   const attemptId = params.attemptId as string;
 
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<AttemptResultDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchResult = async () => {
-      try {
-        const data = await getData(`${ENDPOINTS.ATTEMPTS}/${attemptId}/result`);
-        setResult(data);
-      } catch (err: any) {
-        const errData = err.response?.data;
-        setError(typeof errData === 'string' ? errData : errData?.message || 'Failed to fetch result');
-      } finally {
-        setIsLoading(false);
+  const fetchResult = useCallback(async () => {
+    if (!attemptId) return;
+    try {
+      const data = await dashboardService.getAttemptResult(attemptId);
+      setPendingMessage(null);
+      setError(null);
+      setResult(data);
+    } catch (err: unknown) {
+      const pending = isEvaluationPendingError(err);
+      if (pending.pending) {
+        setPendingMessage(pending.message);
+      } else {
+        setError('Failed to fetch attempt result.');
       }
-    };
-    if (attemptId) fetchResult();
+    } finally {
+      setIsLoading(false);
+    }
   }, [attemptId]);
 
-  const viewSolutions = () => {
-    router.push(`/dashboard/results/${attemptId}/review`);
+  const handleCheckAgain = () => {
+    setIsLoading(true);
+    setPendingMessage(null);
+    setError(null);
+    void fetchResult();
   };
 
-  const retakeTest = () => {
-    const confirmed = confirm("Do you want to retake this test?");
-    if (confirmed) {
-      router.push('/dashboard/exams'); // fallback route
-    }
-  };
-
-  const goToTests = () => {
-    router.push('/dashboard/exams');
-  };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void fetchResult();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchResult]);
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-40 min-h-screen bg-[#f6f7fb]">
+      <div className="flex flex-col items-center justify-center py-40 min-h-[60vh]">
         <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
-        <p className="text-gray-500 font-medium">Loading your result...</p>
+        <p className="text-slate-500 font-medium">Loading your result...</p>
       </div>
     );
   }
 
-  if (error) {
+  if (pendingMessage) {
     return (
-      <div className="max-w-2xl mx-auto py-20 min-h-screen bg-[#f6f7fb]">
-        <div className="bg-red-50 text-red-600 p-6 rounded-xl border border-red-100 text-center">
-          <h2 className="font-bold text-lg mb-2">Error</h2>
-          <p>{error}</p>
-          <button 
-            onClick={goToTests}
-            className="mt-4 bg-red-100 text-red-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-200"
+      <div className="max-w-xl mx-auto py-16">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+            <Clock size={28} />
+          </div>
+          <h2 className="text-lg font-bold text-amber-900">Evaluation Pending</h2>
+          <p className="mt-2 text-sm text-amber-800">{pendingMessage}</p>
+          <p className="mt-1 text-xs text-amber-700">
+            Results will unlock automatically once evaluation is finalized.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={handleCheckAgain}
+              className="rounded-xl bg-amber-600 px-4 py-2 text-xs font-semibold text-white hover:bg-amber-700 cursor-pointer"
+            >
+              Check Again
+            </button>
+            <Link
+              href="/dashboard/results"
+              className="rounded-xl border border-amber-300 bg-white px-4 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+            >
+              Back to Results
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !result) {
+    return (
+      <div className="max-w-xl mx-auto py-16">
+        <div className="bg-rose-50 text-rose-700 p-6 rounded-2xl border border-rose-200 text-center">
+          <h2 className="font-bold text-lg mb-2">Unable to Load Result</h2>
+          <p className="text-sm">{error || 'Result not found.'}</p>
+          <button
+            type="button"
+            onClick={() => router.push('/dashboard/results')}
+            className="mt-4 bg-rose-100 text-rose-800 px-4 py-2 rounded-xl text-xs font-semibold hover:bg-rose-200 cursor-pointer"
           >
-            Go Back
+            Back to Attempt History
           </button>
         </div>
       </div>
     );
   }
 
-  // Derive stats from API
-  const score = parseFloat(result?.score || '0');
-  const totalMarks = result?.total_marks || (result?.total_questions ? result.total_questions * 4 : 0); // fallback to 4 marks per q if not provided
-  const percentage = result?.percentage || (totalMarks > 0 ? (score / totalMarks) * 100 : 0);
-  const totalQuestions = result?.total_questions || 0;
-  const correct = result?.correct_answers || 0;
-  const wrong = result?.wrong_answers || 0;
-  const answered = result?.attempted_questions || 0;
-  const skipped = result?.skipped_questions !== undefined ? result.skipped_questions : (totalQuestions - answered);
-  
-  const completedDate = result?.submitted_at 
-    ? new Date(result.submitted_at).toLocaleString('en-US', { 
-        month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true 
-      }) 
-    : (result?.started_at ? new Date(result.started_at).toLocaleString('en-US', { month: 'short', day: 'numeric' }) : 'N/A');
+  const percentage = Number(result.percentage || 0);
+  const scoreAngle = Math.min(360, Math.max(0, (percentage / 100) * 360));
+  const completedDate = result.submittedAt
+    ? new Date(result.submittedAt).toLocaleString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true,
+      })
+    : formatDisplayDate(result.startedAt);
 
   return (
-    <div className="min-h-screen bg-[#f6f7fb] text-[#172033]">
+    <div className="text-[#172033]">
+      <div className="mb-4">
+        <Link
+          href="/dashboard/results"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+        >
+          <ArrowLeft size={14} /> Back to Attempt History
+        </Link>
+      </div>
 
       <main className="container">
         <div className="page-title">
           <h1>Test Result</h1>
-          <p>Here's your performance summary for the completed test.</p>
+          <p>Detailed performance evaluation for your submitted attempt.</p>
         </div>
 
         <section className="result-hero">
           <div className="score-section">
-            <div className="score-circle">
+            <div
+              className="score-circle"
+              style={{
+                background: `conic-gradient(#6366f1 0deg ${scoreAngle}deg, #eeeef4 ${scoreAngle}deg 360deg)`,
+              }}
+            >
               <div className="score-value">{Math.round(percentage)}%</div>
               <div className="score-label">Overall Score</div>
             </div>
-            <div className={`result-status ${percentage >= 50 ? 'bg-[#eafaf4] text-[#079669]' : 'bg-[#fff1f1] text-[#e5484d]'}`}>
-              {percentage >= 50 ? '✓ Test Passed' : '✕ Needs Improvement'}
+            <div
+              className={`result-status ${
+                percentage >= 60 ? 'bg-[#eafaf4] text-[#079669]' : 'bg-[#fff1f1] text-[#e5484d]'
+              }`}
+            >
+              {percentage >= 80
+                ? '✓ Strong Performance'
+                : percentage >= 60
+                  ? '✓ Average Performance'
+                  : 'Needs Improvement'}
             </div>
           </div>
 
           <div className="result-details">
-            <h2>JEE Mathematics — Algebra</h2>
-            <p>Completed on {completedDate}</p>
+            <h2>{result.testTitle}</h2>
+            <p>
+              {result.seriesTitle ? `${result.seriesTitle} • ` : ''}
+              {result.subjectName ? `${result.subjectName} • ` : ''}
+              Completed on {completedDate}
+            </p>
 
             <div className="detail-grid">
               <div className="detail-box">
-                <span>Score</span>
-                <strong>{score} / {totalMarks}</strong>
+                <span>Marks</span>
+                <strong>
+                  {result.obtainedMarks} / {result.totalMarks}
+                </strong>
               </div>
               <div className="detail-box">
-                <span>Percentage</span>
-                <strong>{Number(percentage).toFixed(2)}%</strong>
+                <span>Accuracy</span>
+                <strong>{Number(result.accuracy).toFixed(1)}%</strong>
               </div>
               <div className="detail-box">
-                <span>Rank</span>
-                <strong>#---</strong>
+                <span>Time Spent</span>
+                <strong>{formatDurationSeconds(result.timeSpentSeconds)}</strong>
               </div>
               <div className="detail-box">
-                <span>Percentile</span>
-                <strong>---%</strong>
+                <span>{result.rank !== null && result.rank !== undefined ? 'Rank' : 'Status'}</span>
+                <strong>
+                  {result.rank !== null && result.rank !== undefined
+                    ? `#${result.rank}`
+                    : result.status}
+                </strong>
               </div>
             </div>
           </div>
@@ -137,82 +213,126 @@ export default function ResultPage() {
             <div className="stat-top">
               <div className="stat-icon">✓</div>
             </div>
-            <h3>{correct}</h3>
+            <h3>{result.correctCount}</h3>
             <p>Correct Answers</p>
           </div>
           <div className="stat-card">
             <div className="stat-top">
               <div className="stat-icon">✕</div>
             </div>
-            <h3>{wrong}</h3>
-            <p>Incorrect Answers</p>
+            <h3>{result.wrongCount}</h3>
+            <p>Wrong Answers</p>
           </div>
           <div className="stat-card">
             <div className="stat-top">
               <div className="stat-icon">○</div>
             </div>
-            <h3>{skipped}</h3>
-            <p>Questions Skipped</p>
+            <h3>{result.skippedCount}</h3>
+            <p>Skipped Questions</p>
           </div>
           <div className="stat-card">
             <div className="stat-top">
-              <div className="stat-icon">✓</div>
+              <div className="stat-icon">◈</div>
             </div>
-            <h3>{answered}</h3>
-            <p>Total Attempted</p>
+            <h3>{result.attemptedCount}</h3>
+            <p>Attempted of {result.totalQuestions}</p>
           </div>
         </div>
 
         <div className="content-grid">
           <div>
+            {/* Subject-wise Scores */}
             <div className="card">
               <div className="card-header">
-                <h2>Subject Performance</h2>
-                <span>Accuracy</span>
+                <h2>Subject-wise Scores</h2>
+                <span>{result.subjectWiseScores.length} Subject(s)</span>
               </div>
-              <div className="performance-row">
-                <span>📐</span>
-                <div>
-                  <div className="subject-name">Overall Mathematics</div>
-                  <div className="performance-bar">
-                    <div className="performance-fill" style={{ width: `${percentage}%` }}></div>
+
+              {result.subjectWiseScores.length === 0 ? (
+                <div className="performance-row">
+                  <span>📐</span>
+                  <div>
+                    <div className="subject-name">{result.subjectName || 'Overall Test'}</div>
+                    <div className="performance-bar">
+                      <div
+                        className="performance-fill"
+                        style={{ width: `${Math.min(100, Math.max(0, percentage))}%` }}
+                      />
+                    </div>
                   </div>
+                  <div className="performance-score">{percentage.toFixed(1)}%</div>
                 </div>
-                <div className="performance-score">{Math.round(percentage)}%</div>
-              </div>
+              ) : (
+                <div className="space-y-4">
+                  {result.subjectWiseScores.map((subj) => (
+                    <div key={subj.subject} className="rounded-xl border border-slate-100 bg-slate-50/60 p-3.5">
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <span className="text-xs font-bold text-slate-800">{subj.subject}</span>
+                        <div className="flex items-center gap-2">
+                          <PerformanceStatusBadge status={subj.status} />
+                          <span className="text-xs font-bold text-slate-800">
+                            {Number(subj.percentage).toFixed(1)}%
+                          </span>
+                        </div>
+                      </div>
+                      <div className="performance-bar mb-2">
+                        <div
+                          className={`h-full rounded-full ${getPerformanceBarClass(subj.status)}`}
+                          style={{ width: `${Math.min(100, Math.max(0, subj.percentage))}%` }}
+                        />
+                      </div>
+                      <div className="flex flex-wrap gap-4 text-[11px] text-slate-500">
+                        <span>
+                          Marks: <strong>{subj.obtainedMarks}/{subj.totalMarks}</strong>
+                        </span>
+                        <span>
+                          Correct: <strong className="text-emerald-700">{subj.correctCount}</strong>
+                        </span>
+                        <span>
+                          Wrong: <strong className="text-rose-700">{subj.wrongCount}</strong>
+                        </span>
+                        <span>
+                          Skipped: <strong>{subj.skippedCount}</strong>
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
+            {/* Answer Summary */}
             <div className="card">
               <div className="card-header">
                 <h2>Answer Summary</h2>
-                <span>{totalQuestions} Questions</span>
+                <span>{result.totalQuestions} Questions</span>
               </div>
               <div className="answer-summary">
                 <div className="answer-box correct">
                   <div className="answer-icon">✓</div>
                   <div className="answer-info">
-                    <strong>{correct}</strong>
+                    <strong>{result.correctCount}</strong>
                     <span>Correct</span>
                   </div>
                 </div>
                 <div className="answer-box wrong">
                   <div className="answer-icon">✕</div>
                   <div className="answer-info">
-                    <strong>{wrong}</strong>
+                    <strong>{result.wrongCount}</strong>
                     <span>Incorrect</span>
                   </div>
                 </div>
                 <div className="answer-box skipped">
                   <div className="answer-icon">—</div>
                   <div className="answer-info">
-                    <strong>{skipped}</strong>
+                    <strong>{result.skippedCount}</strong>
                     <span>Skipped</span>
                   </div>
                 </div>
                 <div className="answer-box review">
                   <div className="answer-icon">★</div>
                   <div className="answer-info">
-                    <strong>{answered}</strong>
+                    <strong>{result.attemptedCount}</strong>
                     <span>Total Attempted</span>
                   </div>
                 </div>
@@ -227,56 +347,72 @@ export default function ResultPage() {
               </div>
               <div className="score-row">
                 <span>Correct Answers</span>
-                <strong>{correct}</strong>
+                <strong>{result.correctCount}</strong>
               </div>
               <div className="score-row">
-                <span>Incorrect Answers</span>
-                <strong>{wrong}</strong>
+                <span>Wrong Answers</span>
+                <strong>{result.wrongCount}</strong>
               </div>
               <div className="score-row">
-                <span>Unattempted</span>
-                <strong>{skipped}</strong>
+                <span>Skipped</span>
+                <strong>{result.skippedCount}</strong>
+              </div>
+              <div className="score-row">
+                <span>Accuracy (excl. skipped)</span>
+                <strong>{Number(result.accuracy).toFixed(1)}%</strong>
               </div>
               <div className="score-row total">
-                <span>Total Score</span>
-                <strong>{score} / {totalMarks}</strong>
+                <span>Total Marks</span>
+                <strong>
+                  {result.obtainedMarks} / {result.totalMarks}
+                </strong>
               </div>
             </div>
 
             <div className="card">
               <div className="card-header">
-                <h2>What's Next?</h2>
+                <h2>Question Review &amp; Actions</h2>
               </div>
               <div className="actions">
-                <button className="btn btn-primary" onClick={viewSolutions}>
-                  View Solutions
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => router.push(`/dashboard/results/${attemptId}/review`)}
+                >
+                  Review Questions &amp; Explanations
                 </button>
-                <button className="btn btn-secondary" onClick={retakeTest}>
-                  Retake Test
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => router.push('/dashboard/tests')}
+                >
+                  Browse Tests
                 </button>
               </div>
             </div>
 
             <div className="card">
               <div className="card-header">
-                <h2>Test Information</h2>
+                <h2>Attempt Metadata</h2>
               </div>
               <div className="score-row">
-                <span>Test</span>
-                <strong>{result?.test_id ? `Test #${result.test_id}` : 'Mathematics'}</strong>
+                <span>Attempt ID</span>
+                <strong>#{result.attemptId}</strong>
               </div>
               <div className="score-row">
-                <span>Questions</span>
-                <strong>{totalQuestions}</strong>
+                <span>Total Questions</span>
+                <strong>{result.totalQuestions}</strong>
               </div>
               <div className="score-row">
-                <span>Attempt</span>
-                <strong>#{result?.id || '-'}</strong>
+                <span>Time Spent</span>
+                <strong>{formatDurationSeconds(result.timeSpentSeconds)}</strong>
               </div>
-              <div className="score-row">
-                <span>Date</span>
-                <strong>{completedDate}</strong>
-              </div>
+              {result.percentile !== null && result.percentile !== undefined && (
+                <div className="score-row">
+                  <span>Percentile</span>
+                  <strong>{Number(result.percentile).toFixed(1)}%</strong>
+                </div>
+              )}
             </div>
           </div>
         </div>
