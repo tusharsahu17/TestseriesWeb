@@ -20,4 +20,8 @@ export const ENDPOINTS = {
   USER_DASHBOARD_NOTIFICATIONS: '/api/user/dashboard/notifications',
   USER_NOTIFICATIONS: '/api/user/notifications',
   ADMIN_DASHBOARD_NOTIFICATIONS: '/api/admin/dashboard/notifications',
+
+  // PDF & Study Material APIs
+  PDFS: '/api/pdfs',
+  PDF_CATEGORIES: '/api/pdf-categories',
 } as const;

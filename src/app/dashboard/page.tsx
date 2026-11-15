@@ -12,6 +12,10 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  Download,
+  Eye,
+  FileText,
+  HardDrive,
   Layers,
   Loader2,
   Play,
@@ -43,6 +47,9 @@ import type {
 import { ScoreTrendChart } from '../../components/dashboard/ScoreTrendChart';
 import { TestCard } from '../../components/dashboard/TestCard';
 import { StartTestModal, useTestStarter } from '../../components/dashboard/StartTestModal';
+import { PdfViewerModal } from '../../components/pdf/PdfViewerModal';
+import { formatFileSize, pdfService } from '../../services/pdfService';
+import type { PdfDocument } from '../../types/pdf';
 import {
   getPerformanceBarClass,
   PerformanceStatusBadge,
@@ -105,6 +112,8 @@ export default function DashboardPage() {
   const [availableTests, setAvailableTests] = useState<AvailableTestsBuckets>(EMPTY_BUCKETS);
   const [recentAttempts, setRecentAttempts] = useState<RecentAttemptItem[]>([]);
   const [performance, setPerformance] = useState<PerformanceAnalytics>(EMPTY_PERFORMANCE);
+  const [recentPdfs, setRecentPdfs] = useState<PdfDocument[]>([]);
+  const [previewPdf, setPreviewPdf] = useState<PdfDocument | null>(null);
 
   const [activeBucket, setActiveBucket] = useState<BucketKey>('recommended');
   const [isLoading, setIsLoading] = useState(true);
@@ -178,6 +187,14 @@ export default function DashboardPage() {
           if (notifRes.status === 'fulfilled') {
             dispatch(setNotificationsSnapshot(notifRes.value));
           }
+        }
+
+        // Fetch recent study documents (non-blocking)
+        try {
+          const pdfRes = await pdfService.getAllPdfs({ limit: 4, sortBy: 'created_at', order: 'DESC' });
+          setRecentPdfs(pdfRes.data.slice(0, 4));
+        } catch {
+          // Keep empty if none or endpoint unreachable
         }
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'Unable to load dashboard.');
@@ -778,6 +795,90 @@ export default function DashboardPage() {
         )}
       </div>
 
+      {/* STUDY MATERIAL PREVIEW */}
+      <div className="dashboard-card">
+        <div className="dashboard-card-header flex-wrap gap-2">
+          <div>
+            <h3>Study Material & PDFs</h3>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Access question papers, solutions, syllabus, and study notes.
+            </p>
+          </div>
+          <Link href="/dashboard/pdfs" className="dashboard-view-all">
+            Browse All Documents →
+          </Link>
+        </div>
+
+        {recentPdfs.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 py-8 text-center text-xs text-slate-500">
+            <p>No study documents uploaded yet.</p>
+            <Link
+              href="/dashboard/pdfs"
+              className="mt-2 inline-block text-xs font-semibold text-indigo-600 hover:underline"
+            >
+              Explore Study Section →
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {recentPdfs.map((pdf) => (
+              <div
+                key={pdf.id}
+                onClick={() => setPreviewPdf(pdf)}
+                className="group flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <span className="rounded-md bg-indigo-50 border border-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 truncate max-w-[80%]">
+                      {pdf.categoryName || 'General'}
+                    </span>
+                    <span className="text-[10px] text-slate-400 shrink-0">
+                      {formatFileSize(pdf.fileSize)}
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-2.5 mb-2">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500 to-red-600 text-white shadow-xs">
+                      <FileText size={17} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                        {pdf.title}
+                      </h4>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreviewPdf(pdf);
+                    }}
+                    className="font-semibold text-indigo-600 hover:text-indigo-800 inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <Eye size={12} />
+                    Preview
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      pdfService.downloadPdfFile(pdf.id, pdf.originalName);
+                    }}
+                    className="text-slate-500 hover:text-indigo-600 inline-flex items-center gap-1 cursor-pointer"
+                    title="Download"
+                  >
+                    <Download size={12} />
+                    Download
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Start validation / conflict modal */}
       <StartTestModal
         test={pendingTest}
@@ -786,6 +887,13 @@ export default function DashboardPage() {
         onResumeConflict={handleResumeConflict}
         onAbandonAndStart={handleAbandonAndStart}
         onClose={closeModal}
+      />
+
+      {/* PDF preview modal */}
+      <PdfViewerModal
+        pdf={previewPdf}
+        isOpen={Boolean(previewPdf)}
+        onClose={() => setPreviewPdf(null)}
       />
     </div>
   );
