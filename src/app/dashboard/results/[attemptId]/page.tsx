@@ -1,21 +1,21 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Clock, Loader2 } from 'lucide-react';
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft, Clock, Loader2 } from "lucide-react";
 import {
   dashboardService,
   formatDisplayDate,
   formatDurationSeconds,
   isEvaluationPendingError,
-} from '../../../../services/dashboardService';
-import type { AttemptResultDetail } from '../../../../types/dashboard';
+} from "../../../../services/dashboardService";
+import type { AttemptResultDetail } from "../../../../types/dashboard";
 import {
   getPerformanceBarClass,
   PerformanceStatusBadge,
-} from '../../../../components/dashboard/StatusBadges';
-import './resultInterface.css';
+} from "../../../../components/dashboard/StatusBadges";
+import "./resultInterface.css";
 
 export default function ResultPage() {
   const params = useParams();
@@ -39,7 +39,7 @@ export default function ResultPage() {
       if (pending.pending) {
         setPendingMessage(pending.message);
       } else {
-        setError('Failed to fetch attempt result.');
+        setError("Failed to fetch attempt result.");
       }
     } finally {
       setIsLoading(false);
@@ -76,7 +76,9 @@ export default function ResultPage() {
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
             <Clock size={28} />
           </div>
-          <h2 className="text-lg font-bold text-amber-900">Evaluation Pending</h2>
+          <h2 className="text-lg font-bold text-amber-900">
+            Evaluation Pending
+          </h2>
           <p className="mt-2 text-sm text-amber-800">{pendingMessage}</p>
           <p className="mt-1 text-xs text-amber-700">
             Results will unlock automatically once evaluation is finalized.
@@ -106,10 +108,10 @@ export default function ResultPage() {
       <div className="max-w-xl mx-auto py-16">
         <div className="bg-rose-50 text-rose-700 p-6 rounded-2xl border border-rose-200 text-center">
           <h2 className="font-bold text-lg mb-2">Unable to Load Result</h2>
-          <p className="text-sm">{error || 'Result not found.'}</p>
+          <p className="text-sm">{error || "Result not found."}</p>
           <button
             type="button"
-            onClick={() => router.push('/dashboard/results')}
+            onClick={() => router.push("/dashboard/results")}
             className="mt-4 bg-rose-100 text-rose-800 px-4 py-2 rounded-xl text-xs font-semibold hover:bg-rose-200 cursor-pointer"
           >
             Back to Attempt History
@@ -122,12 +124,12 @@ export default function ResultPage() {
   const percentage = Number(result.percentage || 0);
   const scoreAngle = Math.min(360, Math.max(0, (percentage / 100) * 360));
   const completedDate = result.submittedAt
-    ? new Date(result.submittedAt).toLocaleString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
+    ? new Date(result.submittedAt).toLocaleString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "numeric",
         hour12: true,
       })
     : formatDisplayDate(result.startedAt);
@@ -162,22 +164,24 @@ export default function ResultPage() {
             </div>
             <div
               className={`result-status ${
-                percentage >= 60 ? 'bg-[#eafaf4] text-[#079669]' : 'bg-[#fff1f1] text-[#e5484d]'
+                percentage >= 60
+                  ? "bg-[#eafaf4] text-[#079669]"
+                  : "bg-[#fff1f1] text-[#e5484d]"
               }`}
             >
               {percentage >= 80
-                ? '✓ Strong Performance'
+                ? "✓ Strong Performance"
                 : percentage >= 60
-                  ? '✓ Average Performance'
-                  : 'Needs Improvement'}
+                  ? "✓ Average Performance"
+                  : "Needs Improvement"}
             </div>
           </div>
 
           <div className="result-details">
             <h2>{result.testTitle}</h2>
             <p>
-              {result.seriesTitle ? `${result.seriesTitle} • ` : ''}
-              {result.subjectName ? `${result.subjectName} • ` : ''}
+              {result.seriesTitle ? `${result.seriesTitle} • ` : ""}
+              {result.subjectName ? `${result.subjectName} • ` : ""}
               Completed on {completedDate}
             </p>
 
@@ -194,10 +198,16 @@ export default function ResultPage() {
               </div>
               <div className="detail-box">
                 <span>Time Spent</span>
-                <strong>{formatDurationSeconds(result.timeSpentSeconds)}</strong>
+                <strong>
+                  {formatDurationSeconds(result.timeSpentSeconds)}
+                </strong>
               </div>
               <div className="detail-box">
-                <span>{result.rank !== null && result.rank !== undefined ? 'Rank' : 'Status'}</span>
+                <span>
+                  {result.rank !== null && result.rank !== undefined
+                    ? "Rank"
+                    : "Status"}
+                </span>
                 <strong>
                   {result.rank !== null && result.rank !== undefined
                     ? `#${result.rank}`
@@ -252,22 +262,33 @@ export default function ResultPage() {
                 <div className="performance-row">
                   <span>📐</span>
                   <div>
-                    <div className="subject-name">{result.subjectName || 'Overall Test'}</div>
+                    <div className="subject-name">
+                      {result.subjectName || "Overall Test"}
+                    </div>
                     <div className="performance-bar">
                       <div
                         className="performance-fill"
-                        style={{ width: `${Math.min(100, Math.max(0, percentage))}%` }}
+                        style={{
+                          width: `${Math.min(100, Math.max(0, percentage))}%`,
+                        }}
                       />
                     </div>
                   </div>
-                  <div className="performance-score">{percentage.toFixed(1)}%</div>
+                  <div className="performance-score">
+                    {percentage.toFixed(1)}%
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {result.subjectWiseScores.map((subj) => (
-                    <div key={subj.subject} className="rounded-xl border border-slate-100 bg-slate-50/60 p-3.5">
+                    <div
+                      key={subj.subject}
+                      className="rounded-xl border border-slate-100 bg-slate-50/60 p-3.5"
+                    >
                       <div className="flex items-center justify-between gap-2 mb-1.5">
-                        <span className="text-xs font-bold text-slate-800">{subj.subject}</span>
+                        <span className="text-xs font-bold text-slate-800">
+                          {subj.subject}
+                        </span>
                         <div className="flex items-center gap-2">
                           <PerformanceStatusBadge status={subj.status} />
                           <span className="text-xs font-bold text-slate-800">
@@ -278,18 +299,29 @@ export default function ResultPage() {
                       <div className="performance-bar mb-2">
                         <div
                           className={`h-full rounded-full ${getPerformanceBarClass(subj.status)}`}
-                          style={{ width: `${Math.min(100, Math.max(0, subj.percentage))}%` }}
+                          style={{
+                            width: `${Math.min(100, Math.max(0, subj.percentage))}%`,
+                          }}
                         />
                       </div>
                       <div className="flex flex-wrap gap-4 text-[11px] text-slate-500">
                         <span>
-                          Marks: <strong>{subj.obtainedMarks}/{subj.totalMarks}</strong>
+                          Marks:{" "}
+                          <strong>
+                            {subj.obtainedMarks}/{subj.totalMarks}
+                          </strong>
                         </span>
                         <span>
-                          Correct: <strong className="text-emerald-700">{subj.correctCount}</strong>
+                          Correct:{" "}
+                          <strong className="text-emerald-700">
+                            {subj.correctCount}
+                          </strong>
                         </span>
                         <span>
-                          Wrong: <strong className="text-rose-700">{subj.wrongCount}</strong>
+                          Wrong:{" "}
+                          <strong className="text-rose-700">
+                            {subj.wrongCount}
+                          </strong>
                         </span>
                         <span>
                           Skipped: <strong>{subj.skippedCount}</strong>
@@ -302,7 +334,7 @@ export default function ResultPage() {
             </div>
 
             {/* Answer Summary */}
-            <div className="card">
+            {/* <div className="card">
               <div className="card-header">
                 <h2>Answer Summary</h2>
                 <span>{result.totalQuestions} Questions</span>
@@ -337,11 +369,11 @@ export default function ResultPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
 
           <div>
-            <div className="card">
+            {/* <div className="card">
               <div className="card-header">
                 <h2>Score Breakdown</h2>
               </div>
@@ -367,7 +399,7 @@ export default function ResultPage() {
                   {result.obtainedMarks} / {result.totalMarks}
                 </strong>
               </div>
-            </div>
+            </div> */}
 
             <div className="card">
               <div className="card-header">
@@ -377,21 +409,23 @@ export default function ResultPage() {
                 <button
                   type="button"
                   className="btn btn-primary"
-                  onClick={() => router.push(`/dashboard/results/${attemptId}/review`)}
+                  onClick={() =>
+                    router.push(`/dashboard/results/${attemptId}/review`)
+                  }
                 >
                   Review Questions &amp; Explanations
                 </button>
                 <button
                   type="button"
                   className="btn btn-secondary"
-                  onClick={() => router.push('/dashboard/tests')}
+                  onClick={() => router.push("/dashboard/tests")}
                 >
                   Browse Tests
                 </button>
               </div>
             </div>
 
-            <div className="card">
+            {/* <div className="card">
               <div className="card-header">
                 <h2>Attempt Metadata</h2>
               </div>
@@ -413,7 +447,7 @@ export default function ResultPage() {
                   <strong>{Number(result.percentile).toFixed(1)}%</strong>
                 </div>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
       </main>
