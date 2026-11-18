@@ -225,11 +225,11 @@ export function StartTestModal({
                   type="button"
                   onClick={() => {
                     onClose();
-                    router.push('/dashboard/test-series');
+                    router.push('/dashboard/tests');
                   }}
                   className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700 cursor-pointer"
                 >
-                  My Test Series
+                  Available Tests
                 </button>
               )}
             </>

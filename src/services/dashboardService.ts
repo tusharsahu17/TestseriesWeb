@@ -534,8 +534,7 @@ export const normalizeNotification = (raw: RawRecord): UserNotification => {
     const seriesId = asString(metadata.seriesId ?? metadata.series_id ?? raw.seriesId);
     if (type === 'RESULT_PUBLISHED' && attemptId) link = `/dashboard/results/${attemptId}`;
     else if (type === 'NEW_TEST' && testId) link = `/dashboard/tests/${testId}`;
-    else if (type === 'SERIES_EXPIRING' && seriesId) link = `/dashboard/test-series/${seriesId}`;
-    else if (type === 'PAYMENT_CONFIRMED' && seriesId) link = `/dashboard/test-series/${seriesId}`;
+    else if (type === 'SERIES_EXPIRING' || type === 'PAYMENT_CONFIRMED') link = '/dashboard';
   }
 
   return {
@@ -982,28 +981,6 @@ export const dashboardService = {
   async getDashboardSummary(): Promise<DashboardSummary> {
     const raw = await getData<unknown>(ENDPOINTS.USER_DASHBOARD_SUMMARY);
     return normalizeSummary(raw);
-  },
-
-  async getDashboardTestSeries(): Promise<StudentTestSeries[]> {
-    const raw = await getData<unknown>(ENDPOINTS.USER_DASHBOARD_TEST_SERIES);
-    return unwrapList(raw, ['testSeries', 'myTestSeries', 'series', 'items', 'data']).map(
-      normalizeTestSeries,
-    );
-  },
-
-  async getAllTestSeries(params: Record<string, unknown> = {}): Promise<StudentTestSeries[]> {
-    const raw = await getData<unknown>(ENDPOINTS.USER_TEST_SERIES, params);
-    return unwrapList(raw, ['testSeries', 'myTestSeries', 'series', 'items', 'data']).map(
-      normalizeTestSeries,
-    );
-  },
-
-  async getTestSeriesDetail(seriesId: string): Promise<StudentTestSeries> {
-    const raw = await getData<unknown>(`${ENDPOINTS.USER_TEST_SERIES}/${seriesId}`);
-    const root = unwrap(raw);
-    const seriesObj = root.testSeries ?? root.series ?? root.test_series;
-    const base = seriesObj ? { ...asRecord(seriesObj), tests: root.tests ?? asRecord(seriesObj).tests } : root;
-    return normalizeTestSeries(base);
   },
 
   async getDashboardAvailableTests(): Promise<AvailableTestsBuckets> {

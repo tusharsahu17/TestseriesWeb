@@ -1,18 +1,22 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { selectIsAuthenticated, selectAuthUser, logout } from '../auth/authSlice';
+import { useEffect, useRef, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  selectIsAuthenticated,
+  selectAuthUser,
+  logout,
+} from "../auth/authSlice";
 import {
   fetchDashboardNotifications,
   markAllNotificationsAsRead,
   markNotificationAsRead,
   selectNotifications,
   selectUnreadNotificationsCount,
-} from '../../store/slices/notificationsSlice';
-import type { AppDispatch } from '../../store/store';
-import { useRouter, usePathname } from 'next/navigation';
-import Link from 'next/link';
+} from "../../store/slices/notificationsSlice";
+import type { AppDispatch } from "../../store/store";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import {
   Bell,
   BookOpen,
@@ -22,15 +26,17 @@ import {
   FileBarChart2,
   FileText,
   Home,
-  Layers,
   LogOut,
   Menu,
   Search,
   X,
-} from 'lucide-react';
-import { formatRelativeTime, getNotificationMeta } from '../../components/dashboard/notificationMeta';
-import type { UserNotification } from '../../types/dashboard';
-import './dashboard.css';
+} from "lucide-react";
+import {
+  formatRelativeTime,
+  getNotificationMeta,
+} from "../../components/dashboard/notificationMeta";
+import type { UserNotification } from "../../types/dashboard";
+import "./dashboard.css";
 
 export default function DashboardLayout({
   children,
@@ -49,7 +55,7 @@ export default function DashboardLayout({
   const [isMounted, setIsMounted] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const notifRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -59,7 +65,7 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (isMounted && !isAuthenticated) {
-      router.push('/auth?tab=login');
+      router.push("/auth?tab=login");
     }
   }, [isAuthenticated, router, isMounted]);
 
@@ -72,25 +78,29 @@ export default function DashboardLayout({
   useEffect(() => {
     const handleUnauthorized = () => {
       dispatch(logout());
-      router.push('/auth?tab=login');
+      router.push("/auth?tab=login");
     };
-    window.addEventListener('auth:unauthorized', handleUnauthorized);
-    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    window.addEventListener("auth:unauthorized", handleUnauthorized);
+    return () =>
+      window.removeEventListener("auth:unauthorized", handleUnauthorized);
   }, [dispatch, router]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+      if (
+        notifRef.current &&
+        !notifRef.current.contains(event.target as Node)
+      ) {
         setIsNotifOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleLogout = () => {
     dispatch(logout());
-    router.push('/auth?tab=login');
+    router.push("/auth?tab=login");
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -99,7 +109,7 @@ export default function DashboardLayout({
     if (trimmed) {
       router.push(`/dashboard/tests?search=${encodeURIComponent(trimmed)}`);
     } else {
-      router.push('/dashboard/tests');
+      router.push("/dashboard/tests");
     }
   };
 
@@ -114,34 +124,47 @@ export default function DashboardLayout({
   };
 
   const displayName = isMounted
-    ? authUser?.fullName || authUser?.name || authUser?.username || authUser?.email || 'Student'
-    : 'Student';
+    ? authUser?.fullName ||
+      authUser?.name ||
+      authUser?.username ||
+      authUser?.email ||
+      "Student"
+    : "Student";
   const initials =
     displayName
       .split(/\s+/)
       .filter(Boolean)
       .slice(0, 2)
       .map((part) => part.charAt(0).toUpperCase())
-      .join('') || 'ST';
-  const roleLabel = isMounted && authUser?.role ? String(authUser.role) : 'Student';
+      .join("") || "ST";
+  const roleLabel =
+    isMounted && authUser?.role ? String(authUser.role) : "Student";
   const safeUnreadCount = isMounted ? unreadCount : 0;
 
   const navItems = [
-    { name: 'Dashboard', href: '/dashboard', Icon: Home },
-    { name: 'My Test Series', href: '/dashboard/test-series', Icon: Layers },
-    { name: 'Available Tests', href: '/dashboard/tests', Icon: Compass },
-    { name: 'My Exams', href: '/dashboard/exams', Icon: BookOpen },
-    { name: 'Study Material', href: '/dashboard/pdfs', Icon: FileText },
-    { name: 'Results', href: '/dashboard/results', Icon: ClipboardList },
-    { name: 'Performance', href: '/dashboard/performance', Icon: FileBarChart2 },
-    { name: 'Notifications', href: '/dashboard/notifications', Icon: Bell, badge: safeUnreadCount },
+    { name: "Dashboard", href: "/dashboard", Icon: Home },
+    { name: "Available Tests", href: "/dashboard/tests", Icon: Compass },
+    { name: "My Exams", href: "/dashboard/exams", Icon: BookOpen },
+    { name: "Study Material", href: "/dashboard/pdfs", Icon: FileText },
+    { name: "Results", href: "/dashboard/results", Icon: ClipboardList },
+    {
+      name: "Performance",
+      href: "/dashboard/performance",
+      Icon: FileBarChart2,
+    },
+    {
+      name: "Notifications",
+      href: "/dashboard/notifications",
+      Icon: Bell,
+      badge: safeUnreadCount,
+    },
   ];
 
   return (
     <div
       className="dashboard-app"
       style={{
-        visibility: isMounted && isAuthenticated ? 'visible' : 'hidden',
+        visibility: isMounted && isAuthenticated ? "visible" : "hidden",
       }}
     >
       {/* Mobile backdrop */}
@@ -153,12 +176,14 @@ export default function DashboardLayout({
       )}
 
       {/* SIDEBAR */}
-      <aside className={`dashboard-sidebar flex flex-col justify-between ${isSidebarOpen ? 'mobile-open' : ''}`}>
+      <aside
+        className={`dashboard-sidebar flex flex-col justify-between ${isSidebarOpen ? "mobile-open" : ""}`}
+      >
         <div>
           <div className="flex items-center justify-between">
             <div className="dashboard-logo">
               <div className="dashboard-logo-icon">✦</div>
-              <span>Quizly</span>
+              <span>CEC</span>
             </div>
             <button
               type="button"
@@ -175,13 +200,13 @@ export default function DashboardLayout({
             {navItems.map((item) => {
               const isActive =
                 pathname === item.href ||
-                (item.href !== '/dashboard' && pathname.startsWith(item.href));
+                (item.href !== "/dashboard" && pathname.startsWith(item.href));
               const Icon = item.Icon;
               return (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`dashboard-nav-item justify-between ${isActive ? 'active' : ''}`}
+                  className={`dashboard-nav-item justify-between ${isActive ? "active" : ""}`}
                   onClick={() => setIsSidebarOpen(false)}
                 >
                   <span className="flex items-center gap-3">
@@ -190,7 +215,7 @@ export default function DashboardLayout({
                   </span>
                   {item.badge !== undefined && item.badge > 0 && (
                     <span className="rounded-full bg-indigo-500 px-2 py-0.5 text-[10px] font-bold text-white">
-                      {item.badge > 99 ? '99+' : item.badge}
+                      {item.badge > 99 ? "99+" : item.badge}
                     </span>
                   )}
                 </Link>
@@ -217,7 +242,7 @@ export default function DashboardLayout({
         <div className="dashboard-mobile-header">
           <div className="dashboard-mobile-logo">
             <div className="dashboard-mobile-logo-icon">✦</div>
-            Quizly
+            CEC
           </div>
           <div className="flex items-center gap-3">
             <Link
@@ -265,7 +290,7 @@ export default function DashboardLayout({
                 <Bell size={18} />
                 {safeUnreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
-                    {safeUnreadCount > 9 ? '9+' : safeUnreadCount}
+                    {safeUnreadCount > 9 ? "9+" : safeUnreadCount}
                   </span>
                 )}
               </button>
@@ -274,9 +299,13 @@ export default function DashboardLayout({
                 <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border border-slate-200 bg-white shadow-xl z-50 overflow-hidden">
                   <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
                     <div>
-                      <h4 className="text-sm font-bold text-slate-900">Notifications</h4>
+                      <h4 className="text-sm font-bold text-slate-900">
+                        Notifications
+                      </h4>
                       <p className="text-[11px] text-slate-500">
-                        {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
+                        {unreadCount > 0
+                          ? `${unreadCount} unread`
+                          : "All caught up"}
                       </p>
                     </div>
                     {unreadCount > 0 && (
@@ -306,7 +335,7 @@ export default function DashboardLayout({
                             type="button"
                             onClick={() => handleNotificationClick(notif)}
                             className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors hover:bg-slate-50 cursor-pointer ${
-                              !notif.isRead ? 'bg-indigo-50/40' : ''
+                              !notif.isRead ? "bg-indigo-50/40" : ""
                             }`}
                           >
                             <div

@@ -69,7 +69,7 @@ function AuthContent() {
             <div>
               <div className="auth-brand">
                 <div className="auth-brand-icon">✦</div>
-                <div className="auth-brand-name">Quizly</div>
+                <div className="auth-brand-name">CEC</div>
               </div>
 
               <div className="auth-hero-content">
@@ -113,7 +113,7 @@ function AuthContent() {
             </div>
 
             <div style={{ color: "#64748b", fontSize: "12px" }}>
-              © 2026 Quizly. Learn. Practice. Achieve.
+              © 2026 CEC. Learn. Practice. Achieve.
             </div>
           </section>
 

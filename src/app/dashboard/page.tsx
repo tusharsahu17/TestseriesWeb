@@ -11,7 +11,6 @@ import {
   BookOpen,
   Calendar,
   CheckCircle2,
-  Clock,
   Download,
   Eye,
   FileText,
@@ -42,7 +41,6 @@ import type {
   DashboardSummary,
   PerformanceAnalytics,
   RecentAttemptItem,
-  StudentTestSeries,
 } from '../../types/dashboard';
 import { ScoreTrendChart } from '../../components/dashboard/ScoreTrendChart';
 import { TestCard } from '../../components/dashboard/TestCard';
@@ -53,7 +51,6 @@ import type { PdfDocument } from '../../types/pdf';
 import {
   getPerformanceBarClass,
   PerformanceStatusBadge,
-  SeriesStatusBadge,
 } from '../../components/dashboard/StatusBadges';
 import { formatRelativeTime, getNotificationMeta } from '../../components/dashboard/notificationMeta';
 
@@ -108,7 +105,6 @@ export default function DashboardPage() {
     accuracy: 0,
     activeTestSeries: 0,
   });
-  const [testSeries, setTestSeries] = useState<StudentTestSeries[]>([]);
   const [availableTests, setAvailableTests] = useState<AvailableTestsBuckets>(EMPTY_BUCKETS);
   const [recentAttempts, setRecentAttempts] = useState<RecentAttemptItem[]>([]);
   const [performance, setPerformance] = useState<PerformanceAnalytics>(EMPTY_PERFORMANCE);
@@ -130,7 +126,6 @@ export default function DashboardPage() {
           }
           setError(null);
           setSummary(combined.summary);
-          setTestSeries(combined.testSeries);
           setAvailableTests(combined.availableTests);
           setRecentAttempts(combined.recentAttempts.slice(0, 5));
           setPerformance(combined.performance);
@@ -145,10 +140,9 @@ export default function DashboardPage() {
           }
         } catch {
           // Fallback to individual dashboard endpoints if combined endpoint is unavailable
-          const [summaryRes, seriesRes, testsRes, attemptsRes, perfRes, notifRes] =
+          const [summaryRes, testsRes, attemptsRes, perfRes, notifRes] =
             await Promise.allSettled([
               dashboardService.getDashboardSummary(),
-              dashboardService.getDashboardTestSeries(),
               dashboardService.getDashboardAvailableTests(),
               dashboardService.getRecentAttempts(),
               dashboardService.getPerformanceAnalytics(),
@@ -157,7 +151,6 @@ export default function DashboardPage() {
 
           const allRejected = [
             summaryRes,
-            seriesRes,
             testsRes,
             attemptsRes,
             perfRes,
@@ -170,7 +163,6 @@ export default function DashboardPage() {
 
           setError(null);
           if (summaryRes.status === 'fulfilled') setSummary(summaryRes.value);
-          if (seriesRes.status === 'fulfilled') setTestSeries(seriesRes.value);
           if (testsRes.status === 'fulfilled') {
             setAvailableTests(testsRes.value);
             if (testsRes.value.recommended.length === 0) {
@@ -574,91 +566,6 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* MY TEST SERIES PREVIEW */}
-      <div className="dashboard-card">
-        <div className="dashboard-card-header">
-          <div>
-            <h3>My Test Series</h3>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              Progress reflects completed & evaluated attempts. Expired series remain visible in history.
-            </p>
-          </div>
-          <Link href="/dashboard/test-series" className="dashboard-view-all">
-            View All ({testSeries.length})
-          </Link>
-        </div>
-
-        {testSeries.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 py-8 text-center">
-            <p className="text-xs font-medium text-slate-600">No enrolled test series found.</p>
-            <Link
-              href="/dashboard/tests"
-              className="mt-2 inline-block text-xs font-semibold text-indigo-600 hover:underline"
-            >
-              Try Free Practice Tests →
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {testSeries.slice(0, 3).map((series) => (
-              <div
-                key={series.id}
-                className={`flex flex-col justify-between rounded-2xl border p-4 transition-all ${
-                  series.canAttempt
-                    ? 'border-slate-200 bg-white hover:border-indigo-200'
-                    : 'border-slate-200 bg-slate-50/70'
-                }`}
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="text-[11px] font-semibold text-indigo-600 truncate">
-                      {series.examName || series.category || 'Test Series'}
-                    </span>
-                    <SeriesStatusBadge status={series.effectiveStatus} />
-                  </div>
-                  <h4 className="text-sm font-bold text-slate-900 line-clamp-1">{series.title}</h4>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    {series.completedTests} / {series.totalTests} tests evaluated
-                  </p>
-
-                  <div className="mt-3">
-                    <div className="flex items-center justify-between text-[11px] mb-1">
-                      <span className="text-slate-500">Progress</span>
-                      <span className="font-bold text-slate-700">{series.progress}%</span>
-                    </div>
-                    <div className="dashboard-bar">
-                      <div
-                        className={`h-full rounded-full ${
-                          series.canAttempt ? 'bg-indigo-600' : 'bg-slate-400'
-                        }`}
-                        style={{ width: `${series.progress}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between pt-3 border-t border-slate-100 text-[11px]">
-                  <span className="text-slate-500 inline-flex items-center gap-1">
-                    <Clock size={12} />
-                    {series.expiresAt
-                      ? `Valid till ${formatDisplayDate(series.expiresAt)}`
-                      : series.endDate
-                        ? `Ends ${formatDisplayDate(series.endDate)}`
-                        : 'Lifetime'}
-                  </span>
-                  <Link
-                    href={`/dashboard/test-series/${series.id}`}
-                    className="font-semibold text-indigo-600 hover:text-indigo-800"
-                  >
-                    {series.canAttempt ? 'Open Series →' : 'View History →'}
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* AVAILABLE TESTS DISCOVERY BUCKETS */}

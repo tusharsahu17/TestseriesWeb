@@ -10,8 +10,6 @@ export const ENDPOINTS = {
   // Student Dashboard APIs
   USER_DASHBOARD: '/api/user/dashboard',
   USER_DASHBOARD_SUMMARY: '/api/user/dashboard/summary',
-  USER_DASHBOARD_TEST_SERIES: '/api/user/dashboard/test-series',
-  USER_TEST_SERIES: '/api/user/test-series',
   USER_DASHBOARD_AVAILABLE_TESTS: '/api/user/dashboard/available-tests',
   USER_TESTS: '/api/user/tests',
   USER_DASHBOARD_RECENT_ATTEMPTS: '/api/user/dashboard/recent-attempts',
