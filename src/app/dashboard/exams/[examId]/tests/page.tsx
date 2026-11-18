@@ -39,8 +39,9 @@ export default function ExamTestsPage() {
   const fetchExamTests = useCallback(async () => {
     if (!examId) return;
     try {
-      const [examRes, subjectsRes, userTestsRes, summaryRes] = await Promise.allSettled([
+      const [examRes, examTestsRes, subjectsRes, userTestsRes, summaryRes] = await Promise.allSettled([
         getData<RawRecord>(`${ENDPOINTS.EXAMS}/${examId}`),
+        getData<unknown>(`${ENDPOINTS.EXAMS}/${examId}/tests`),
         getData<RawSubject[]>(`${ENDPOINTS.EXAMS}/${examId}/subjects`),
         dashboardService.getAvailableTests({ examId }),
         dashboardService.getDashboardSummary(),
@@ -69,8 +70,35 @@ export default function ExamTestsPage() {
           : [];
 
       let resolvedTests: AvailableTestItem[] = [];
+      const seen = new Set<string>();
 
-      if (subjectsList.length > 0) {
+      // 1. Tests directly belonging to this exam
+      if (examTestsRes.status === 'fulfilled' && examTestsRes.value) {
+        const normalized = normalizeAvailableTestsArray(examTestsRes.value).map((item) => {
+          const enriched = userTestsById.get(item.id);
+          return enriched
+            ? {
+                ...item,
+                ...enriched,
+                examId: item.examId || enriched.examId || examId,
+                subjectName: enriched.subjectName || item.subjectName,
+              }
+            : {
+                ...item,
+                examId: item.examId || examId,
+              };
+        });
+
+        for (const test of normalized) {
+          if (test.id && !seen.has(test.id)) {
+            seen.add(test.id);
+            resolvedTests.push(test);
+          }
+        }
+      }
+
+      // 2. Fallback to fetching tests across the exam's subjects
+      if (resolvedTests.length === 0 && subjectsList.length > 0) {
         const subjectTestsResults = await Promise.allSettled(
           subjectsList.map(async (subj) => {
             const subjId = String(subj.id ?? subj._id ?? '');
@@ -89,7 +117,6 @@ export default function ExamTestsPage() {
           }),
         );
 
-        const seen = new Set<string>();
         for (const res of subjectTestsResults) {
           if (res.status === 'fulfilled') {
             for (const test of res.value) {
@@ -102,26 +129,20 @@ export default function ExamTestsPage() {
         }
       }
 
-      // Fallback to /api/user/tests filtered by examId or exam subjects if subject endpoints returned none
+      // 3. Fallback to /api/user/tests if other endpoints returned none
       if (resolvedTests.length === 0 && userTestsList.length > 0) {
-        const subjectNames = new Set(
-          subjectsList.map((s) => (s.name || '').toLowerCase()).filter(Boolean),
-        );
-        const byExamId = userTestsList.filter((t) => t.examId === examId);
-        if (byExamId.length > 0) {
-          resolvedTests = byExamId;
-        } else if (subjectNames.size > 0) {
-          const bySubject = userTestsList.filter((t) =>
-            subjectNames.has(t.subjectName.toLowerCase()),
-          );
-          resolvedTests = bySubject;
-        } else {
-          resolvedTests = userTestsList;
-        }
+        resolvedTests = userTestsList;
       }
+
+      // Filter tests by test.examId === examId.
+      // A test linked to Exam A will never display under Exam B, even if both exams share the same subject.
+      resolvedTests = resolvedTests.filter(
+        (test) => test.examId === examId || (Boolean(test.examId) && String(test.examId) === String(examId)),
+      );
 
       if (
         resolvedTests.length === 0 &&
+        examTestsRes.status === 'rejected' &&
         subjectsRes.status === 'rejected' &&
         userTestsRes.status === 'rejected'
       ) {

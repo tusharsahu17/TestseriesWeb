@@ -31,6 +31,7 @@ export default function ResultPage() {
     if (!attemptId) return;
     try {
       const data = await dashboardService.getAttemptResult(attemptId);
+      console.log("==========>>>>", data);
       setPendingMessage(null);
       setError(null);
       setResult(data);

@@ -158,8 +158,12 @@ export const normalizeAvailableTest = (raw: RawRecord): AvailableTestItem => {
       raw.subjectName ?? raw.subject_name ?? subjectObj.name ?? raw.subject,
       'General',
     ),
+    subjectId:
+      asString(raw.subjectId ?? raw.subject_id ?? testObj.subjectId ?? testObj.subject_id ?? subjectObj.id) || null,
     examId:
       asString(raw.examId ?? raw.exam_id ?? testObj.examId ?? testObj.exam_id) || null,
+    examName:
+      asString(raw.examName ?? raw.exam_name ?? testObj.examName ?? testObj.exam_name) || null,
     seriesId:
       asString(raw.seriesId ?? raw.series_id ?? raw.testSeriesId ?? seriesObj.id) || null,
     seriesTitle:
@@ -630,9 +634,22 @@ export const normalizeQuestionReview = (raw: RawRecord, index: number): Question
     options,
     userAnswerId,
     correctAnswerId,
-    userAnswerText: userOpt?.text ?? (asString(raw.userAnswerText ?? raw.user_answer_text) || null),
+    userAnswerText:
+      userOpt?.text ??
+      (asString(
+        raw.userAnswerText ??
+          raw.user_answer_text ??
+          raw.selectedOptionText ??
+          raw.selected_option_text,
+      ) || null),
     correctAnswerText:
-      correctOpt?.text ?? (asString(raw.correctAnswerText ?? raw.correct_answer_text) || null),
+      correctOpt?.text ??
+      (asString(
+        raw.correctAnswerText ??
+          raw.correct_answer_text ??
+          raw.correctOptionText ??
+          raw.correct_option_text,
+      ) || null),
     isCorrect,
     isSkipped,
     marksObtained: asNumber(raw.marksObtained ?? raw.marks_obtained ?? raw.marks, 0),
@@ -656,17 +673,23 @@ export const normalizeAttemptResult = (raw: unknown): AttemptResultDetail => {
       root.obtained_marks ??
       root.score ??
       summary.obtainedMarks ??
+      summary.score ??
       attempt.score,
     0,
   );
   const totalMarks = asNumber(
-    root.totalMarks ?? root.total_marks ?? summary.totalMarks ?? test.total_marks,
+    root.totalMarks ??
+      root.total_marks ??
+      summary.totalMarks ??
+      summary.total_marks ??
+      test.total_marks,
     0,
   );
   const totalQuestions = asNumber(
     root.totalQuestions ??
       root.total_questions ??
       summary.totalQuestions ??
+      summary.total_questions ??
       test.total_questions,
     0,
   );
@@ -674,7 +697,10 @@ export const normalizeAttemptResult = (raw: unknown): AttemptResultDetail => {
     root.correctCount ??
       root.correct_answers ??
       root.correctAnswers ??
+      root.correct ??
       summary.correctCount ??
+      summary.correct_answers ??
+      summary.correctAnswers ??
       summary.correct,
     0,
   );
@@ -683,25 +709,39 @@ export const normalizeAttemptResult = (raw: unknown): AttemptResultDetail => {
       root.wrong_answers ??
       root.wrongAnswers ??
       root.incorrectCount ??
+      root.incorrect ??
       summary.wrongCount ??
+      summary.wrong_answers ??
+      summary.wrongAnswers ??
+      summary.incorrectCount ??
       summary.incorrect,
     0,
+  );
+  const attemptedCount = asNumber(
+    root.attemptedCount ??
+      root.attempted_questions ??
+      root.attemptedQuestions ??
+      root.attempted ??
+      summary.attemptedCount ??
+      summary.attempted_questions ??
+      summary.attemptedQuestions ??
+      summary.attempted,
+    correctCount + wrongCount,
   );
   const skippedCount = asNumber(
     root.skippedCount ??
       root.skipped_questions ??
       root.skippedAnswers ??
+      root.skipped ??
       summary.skippedCount ??
+      summary.skipped_questions ??
+      summary.skippedAnswers ??
       summary.skipped,
     Math.max(0, totalQuestions - (correctCount + wrongCount)),
   );
-  const attemptedCount = asNumber(
-    root.attemptedCount ?? root.attempted_questions ?? root.attemptedQuestions,
-    correctCount + wrongCount,
-  );
 
   const percentage = asNumber(
-    root.percentage ?? root.scorePercentage ?? summary.percentage,
+    root.percentage ?? root.scorePercentage ?? summary.percentage ?? summary.scorePercentage,
     totalMarks > 0 ? Number(((obtainedMarks / totalMarks) * 100).toFixed(2)) : 0,
   );
   const accuracy = asNumber(
@@ -713,34 +753,78 @@ export const normalizeAttemptResult = (raw: unknown): AttemptResultDetail => {
     root.subjectWiseScores ??
       root.subject_wise_scores ??
       root.subjectWisePerformance ??
-      root.subjects,
+      root.subjects ??
+      summary.subjectWiseScores ??
+      summary.subjectWisePerformance,
     ['items'],
   );
 
   const rawQuestions = unwrapList(
-    root.questions ?? root.questionReview ?? root.question_review ?? root.answers ?? root.review,
+    root.questions ??
+      root.questionReview ??
+      root.question_review ??
+      root.answers ??
+      root.review ??
+      summary.questions,
     ['items'],
   );
 
   return {
-    attemptId: asString(root.attemptId ?? root.attempt_id ?? root.id ?? attempt.id),
-    testId: asString(root.testId ?? root.test_id ?? test.id ?? attempt.test_id),
+    attemptId: asString(
+      root.attemptId ?? root.attempt_id ?? root.id ?? summary.attemptId ?? summary.id ?? attempt.id,
+    ),
+    testId: asString(
+      root.testId ?? root.test_id ?? summary.testId ?? test.id ?? attempt.test_id,
+    ),
     testTitle: asString(
-      root.testTitle ?? root.test_title ?? test.title ?? test.name,
+      root.testTitle ??
+        root.test_title ??
+        root.testName ??
+        summary.testTitle ??
+        summary.testName ??
+        summary.name ??
+        test.title ??
+        test.name,
       'Test Result',
     ),
     seriesTitle:
-      asString(root.seriesTitle ?? root.series_title ?? root.seriesName ?? test.seriesTitle) ||
-      null,
+      asString(
+        root.seriesTitle ??
+          root.series_title ??
+          root.seriesName ??
+          root.testSeriesTitle ??
+          summary.testSeriesTitle ??
+          summary.seriesTitle ??
+          test.seriesTitle,
+      ) || null,
     subjectName:
-      asString(root.subjectName ?? root.subject_name ?? root.subject ?? test.subjectName) || null,
-    status: asString(root.status ?? attempt.status, 'EVALUATED').toUpperCase(),
+      asString(
+        root.subjectName ??
+          root.subject_name ??
+          root.subject ??
+          summary.subjectName ??
+          summary.subject ??
+          test.subjectName,
+      ) || null,
+    status: asString(root.status ?? summary.status ?? attempt.status, 'EVALUATED').toUpperCase(),
     submittedAt:
-      asString(root.submittedAt ?? root.submitted_at ?? attempt.submitted_at ?? attempt.end_time) ||
-      null,
+      asString(
+        root.submittedAt ??
+          root.submitted_at ??
+          summary.submittedAt ??
+          summary.submitted_at ??
+          attempt.submitted_at ??
+          attempt.end_time,
+      ) || null,
     startedAt:
-      asString(root.startedAt ?? root.started_at ?? attempt.started_at ?? attempt.start_time) ||
-      null,
+      asString(
+        root.startedAt ??
+          root.started_at ??
+          summary.startedAt ??
+          summary.started_at ??
+          attempt.started_at ??
+          attempt.start_time,
+      ) || null,
     obtainedMarks,
     totalMarks,
     percentage,
@@ -751,11 +835,20 @@ export const normalizeAttemptResult = (raw: unknown): AttemptResultDetail => {
     attemptedCount,
     totalQuestions: totalQuestions || rawQuestions.length,
     timeSpentSeconds: asNumber(
-      root.timeSpentSeconds ?? root.time_spent_seconds ?? summary.timeSpentSeconds ?? attempt.time_spent_seconds,
+      root.timeSpentSeconds ??
+        root.time_spent_seconds ??
+        root.timeTakenSeconds ??
+        root.time_taken_seconds ??
+        summary.timeSpentSeconds ??
+        summary.time_spent_seconds ??
+        summary.timeTakenSeconds ??
+        summary.time_taken_seconds ??
+        attempt.time_spent_seconds ??
+        attempt.time_taken_seconds,
       0,
     ),
-    rank: asOptionalNumber(root.rank),
-    percentile: asOptionalNumber(root.percentile),
+    rank: asOptionalNumber(root.rank ?? summary.rank ?? attempt.rank),
+    percentile: asOptionalNumber(root.percentile ?? summary.percentile ?? attempt.percentile),
     subjectWiseScores: rawSubjectScores.map(normalizeSubjectPerformance),
     questions: rawQuestions.map(normalizeQuestionReview),
   };

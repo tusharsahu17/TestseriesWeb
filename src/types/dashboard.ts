@@ -22,7 +22,9 @@ export interface AvailableTestItem {
   title: string;
   description: string;
   subjectName: string;
+  subjectId?: string | null;
   examId?: string | null;
+  examName?: string | null;
   seriesId?: string | null;
   seriesTitle?: string | null;
   durationMinutes: number;

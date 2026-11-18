@@ -31,9 +31,10 @@ export default function SubjectTestsPage() {
   const fetchTests = useCallback(async () => {
     if (!subjectId) return;
     try {
-      const [subjectTestsRes, userTestsRes, summaryRes] = await Promise.allSettled([
+      const [subjectTestsRes, examTestsRes, userTestsRes, summaryRes] = await Promise.allSettled([
         getData<unknown>(`${ENDPOINTS.SUBJECTS}/${subjectId}/tests`),
-        dashboardService.getAvailableTests({ subjectId }),
+        getData<unknown>(`${ENDPOINTS.EXAMS}/${examId}/tests`),
+        dashboardService.getAvailableTests({ examId, subjectId }),
         dashboardService.getDashboardSummary(),
       ]);
 
@@ -58,11 +59,29 @@ export default function SubjectTestsPage() {
               }
             : normalized;
         });
+      } else if (examTestsRes.status === 'fulfilled' && examTestsRes.value) {
+        resolved = normalizeAvailableTestsArray(examTestsRes.value)
+          .filter((t) => !t.subjectId || String(t.subjectId) === String(subjectId))
+          .map((test) => {
+            const enriched = userTestsById.get(test.id);
+            return enriched ? { ...test, ...enriched } : test;
+          });
       } else if (userTests.length > 0) {
         resolved = userTests;
       }
 
-      if (subjectTestsRes.status === 'rejected' && userTestsRes.status === 'rejected') {
+      // Filter tests by test.examId === examId.
+      // A test linked to Exam A will never display under Exam B, even if both exams share the same subject.
+      resolved = resolved.filter(
+        (test) => test.examId === examId || (Boolean(test.examId) && String(test.examId) === String(examId)),
+      );
+
+      if (
+        resolved.length === 0 &&
+        subjectTestsRes.status === 'rejected' &&
+        examTestsRes.status === 'rejected' &&
+        userTestsRes.status === 'rejected'
+      ) {
         throw new Error('Failed to fetch tests for this subject.');
       }
 
@@ -73,7 +92,7 @@ export default function SubjectTestsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [subjectId]);
+  }, [examId, subjectId]);
 
   const handleRetry = () => {
     setIsLoading(true);
