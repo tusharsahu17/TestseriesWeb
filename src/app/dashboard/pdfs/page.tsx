@@ -176,40 +176,11 @@ function PdfsContent() {
       {/* Header Banner */}
       <div className="dashboard-welcome">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600">
-              <FileText size={16} />
-            </span>
-            <span className="text-xs font-bold uppercase tracking-wider text-rose-600">
-              Learning Resources
-            </span>
-          </div>
           <h1>Study Material & Documents</h1>
-          <p>
+          {/* <p>
             Browse and download question papers, syllabus, revision notes,
             formula sheets, and solution PDFs.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="dashboard-date-btn cursor-pointer hover:bg-slate-50"
-            title="Refresh documents"
-          >
-            <RefreshCw
-              size={14}
-              className={isRefreshing ? "animate-spin" : ""}
-            />
-            <span>{isRefreshing ? "Refreshing..." : "Refresh"}</span>
-          </button>
-
-          <div className="hidden sm:flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-            <HardDrive size={14} className="text-indigo-600" />
-            <span>{formatFileSize(totalStorageBytes)} Total</span>
-          </div>
+          </p> */}
         </div>
       </div>
 

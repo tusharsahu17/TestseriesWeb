@@ -31,6 +31,7 @@ export interface AvailableTestItem {
   totalQuestions: number;
   totalMarks: number;
   isFree: boolean;
+  isPublished?: boolean;
   difficulty?: string;
   startTime?: string | null;
   endTime?: string | null;

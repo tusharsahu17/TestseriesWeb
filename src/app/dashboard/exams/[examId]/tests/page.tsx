@@ -41,7 +41,7 @@ export default function ExamTestsPage() {
     try {
       const [examRes, examTestsRes, subjectsRes, userTestsRes, summaryRes] = await Promise.allSettled([
         getData<RawRecord>(`${ENDPOINTS.EXAMS}/${examId}`),
-        getData<unknown>(`${ENDPOINTS.EXAMS}/${examId}/tests`),
+        getData<unknown>(`${ENDPOINTS.EXAMS}/${examId}/tests?is_published=true`),
         getData<RawSubject[]>(`${ENDPOINTS.EXAMS}/${examId}/subjects`),
         dashboardService.getAvailableTests({ examId }),
         dashboardService.getDashboardSummary(),
@@ -74,7 +74,9 @@ export default function ExamTestsPage() {
 
       // 1. Tests directly belonging to this exam
       if (examTestsRes.status === 'fulfilled' && examTestsRes.value) {
-        const normalized = normalizeAvailableTestsArray(examTestsRes.value).map((item) => {
+        const normalized = normalizeAvailableTestsArray(examTestsRes.value)
+          .filter((item: any) => item.isPublished ?? item.is_published ?? true)
+          .map((item) => {
           const enriched = userTestsById.get(item.id);
           return enriched
             ? {
@@ -103,8 +105,10 @@ export default function ExamTestsPage() {
           subjectsList.map(async (subj) => {
             const subjId = String(subj.id ?? subj._id ?? '');
             if (!subjId) return [];
-            const raw = await getData<unknown>(`${ENDPOINTS.SUBJECTS}/${subjId}/tests`);
-            return normalizeAvailableTestsArray(raw, subj.name).map((normalized) => {
+            const raw = await getData<unknown>(`${ENDPOINTS.SUBJECTS}/${subjId}/tests?is_published=true`);
+            return normalizeAvailableTestsArray(raw, subj.name)
+              .filter((item: any) => item.isPublished ?? item.is_published ?? true)
+              .map((normalized) => {
               const enriched = userTestsById.get(normalized.id);
               return enriched
                 ? {
@@ -134,10 +138,12 @@ export default function ExamTestsPage() {
         resolvedTests = userTestsList;
       }
 
-      // Filter tests by test.examId === examId.
+      // Filter tests by test.examId === examId and ensure unpublished tests are not shown.
       // A test linked to Exam A will never display under Exam B, even if both exams share the same subject.
       resolvedTests = resolvedTests.filter(
-        (test) => test.examId === examId || (Boolean(test.examId) && String(test.examId) === String(examId)),
+        (test: any) =>
+          (test.isPublished ?? test.is_published ?? true) &&
+          (test.examId === examId || (Boolean(test.examId) && String(test.examId) === String(examId))),
       );
 
       if (
@@ -184,7 +190,8 @@ export default function ExamTestsPage() {
 
   const subjects = Array.from(new Set(tests.map((t) => t.subjectName).filter(Boolean)));
 
-  const filteredTests = tests.filter((test) => {
+  const filteredTests = tests.filter((test: any) => {
+    if ((test.isPublished ?? test.is_published ?? true) === false) return false;
     const q = search.trim().toLowerCase();
     const matchesText =
       !q ||
