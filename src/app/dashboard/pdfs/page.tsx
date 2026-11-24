@@ -7,6 +7,7 @@ import {
   BookOpen,
   FileCheck2,
   FileText,
+  Filter,
   Grid3X3,
   HardDrive,
   LayoutList,
@@ -44,6 +45,17 @@ function PdfsContent() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+  // Normalize current category value for dropdown select
+  const currentCategoryValue = useMemo(() => {
+    if (selectedCategoryId === "ALL") return "ALL";
+    const matched = categories.find(
+      (c) =>
+        String(c.id) === selectedCategoryId ||
+        c.name.toLowerCase() === selectedCategoryId.toLowerCase(),
+    );
+    return matched ? String(matched.id) : selectedCategoryId;
+  }, [selectedCategoryId, categories]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -183,7 +195,95 @@ function PdfsContent() {
           </p> */}
         </div>
       </div>
+      {/* Search, Filter, Sort, and View Controls */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-2xl bg-white border border-slate-200 shadow-sm">
+        {/* Search input */}
+        <div className="relative flex-1">
+          <Search
+            size={16}
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+          />
+          <input
+            type="text"
+            placeholder="Search by title, description, or file name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-9 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+            >
+              <X size={15} />
+            </button>
+          )}
+        </div>
 
+        {/* Right side controls: Category Filter, Sort & View Toggle */}
+        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 shrink-0">
+          <div className="flex items-center gap-2">
+            <Filter size={14} className="text-slate-400" />
+            <select
+              value={currentCategoryValue}
+              onChange={(e) => setSelectedCategoryOverride(e.target.value)}
+              className="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer max-w-[180px] sm:max-w-[220px] truncate"
+              title="Filter by category"
+            >
+              <option value="ALL">All Categories ({totalPdfsCount})</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={String(cat.id)}>
+                  {cat.name} ({cat.pdfCount || (cat.pdfs ? cat.pdfs.length : 0)})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal size={14} className="text-slate-400" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              className="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="title-asc">Title: A to Z</option>
+              <option value="title-desc">Title: Z to A</option>
+              <option value="size-desc">Size: Largest First</option>
+              <option value="size-asc">Size: Smallest First</option>
+            </select>
+          </div>
+
+          <div className="flex items-center border border-slate-200 rounded-xl p-0.5 bg-slate-50">
+            <button
+              type="button"
+              onClick={() => setViewMode("grid")}
+              className={`p-1.5 rounded-lg transition cursor-pointer ${
+                viewMode === "grid"
+                  ? "bg-white text-indigo-600 shadow-xs"
+                  : "text-slate-400 hover:text-slate-600"
+              }`}
+              title="Grid view"
+            >
+              <Grid3X3 size={15} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("list")}
+              className={`p-1.5 rounded-lg transition cursor-pointer ${
+                viewMode === "list"
+                  ? "bg-white text-indigo-600 shadow-xs"
+                  : "text-slate-400 hover:text-slate-600"
+              }`}
+              title="List view"
+            >
+              <LayoutList size={15} />
+            </button>
+          </div>
+        </div>
+      </div>
       {error && (
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-700">
           <div className="flex items-center gap-2.5">
@@ -241,147 +341,31 @@ function PdfsContent() {
         </div> */}
       </div>
 
-      {/* Categories Filter Pills */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
+      {/* Category Results Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-            Filter by Category
+            {selectedCategoryId === "ALL"
+              ? "All Documents"
+              : categories.find(
+                  (c) =>
+                    String(c.id) === selectedCategoryId ||
+                    c.name.toLowerCase() === selectedCategoryId.toLowerCase(),
+                )?.name || "Filtered Documents"}
           </span>
-          {selectedCategoryId !== "ALL" && (
-            <button
-              type="button"
-              onClick={() => setSelectedCategoryOverride("ALL")}
-              className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 cursor-pointer"
-            >
-              Show all ({totalPdfsCount})
-            </button>
-          )}
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+            {filteredPdfs.length}
+          </span>
         </div>
-
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+        {selectedCategoryId !== "ALL" && (
           <button
             type="button"
             onClick={() => setSelectedCategoryOverride("ALL")}
-            className={`shrink-0 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition cursor-pointer ${
-              selectedCategoryId === "ALL"
-                ? "bg-indigo-600 text-white shadow-sm"
-                : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-            }`}
+            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 cursor-pointer"
           >
-            <span>All Documents</span>
-            <span
-              className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                selectedCategoryId === "ALL"
-                  ? "bg-white/20 text-white"
-                  : "bg-slate-100 text-slate-600"
-              }`}
-            >
-              {totalPdfsCount}
-            </span>
+            Show all ({totalPdfsCount})
           </button>
-
-          {categories.map((cat) => {
-            const isSelected =
-              selectedCategoryId === String(cat.id) ||
-              selectedCategoryId.toLowerCase() === cat.name.toLowerCase();
-            return (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => setSelectedCategoryOverride(String(cat.id))}
-                className={`shrink-0 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition cursor-pointer ${
-                  isSelected
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                <span>{cat.name}</span>
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                    isSelected
-                      ? "bg-white/20 text-white"
-                      : "bg-slate-100 text-slate-600"
-                  }`}
-                >
-                  {cat.pdfCount || (cat.pdfs ? cat.pdfs.length : 0)}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Search, Sort, and View Controls */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-2xl bg-white border border-slate-200 shadow-sm">
-        {/* Search input */}
-        <div className="relative flex-1">
-          <Search
-            size={16}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-          />
-          <input
-            type="text"
-            placeholder="Search by title, description, or file name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-9 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-            >
-              <X size={15} />
-            </button>
-          )}
-        </div>
-
-        {/* Right side controls: Sort & View Toggle */}
-        <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
-          <div className="flex items-center gap-2">
-            <SlidersHorizontal size={14} className="text-slate-400" />
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
-            >
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="title-asc">Title: A to Z</option>
-              <option value="title-desc">Title: Z to A</option>
-              <option value="size-desc">Size: Largest First</option>
-              <option value="size-asc">Size: Smallest First</option>
-            </select>
-          </div>
-
-          <div className="flex items-center border border-slate-200 rounded-xl p-0.5 bg-slate-50">
-            <button
-              type="button"
-              onClick={() => setViewMode("grid")}
-              className={`p-1.5 rounded-lg transition cursor-pointer ${
-                viewMode === "grid"
-                  ? "bg-white text-indigo-600 shadow-xs"
-                  : "text-slate-400 hover:text-slate-600"
-              }`}
-              title="Grid view"
-            >
-              <Grid3X3 size={15} />
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("list")}
-              className={`p-1.5 rounded-lg transition cursor-pointer ${
-                viewMode === "list"
-                  ? "bg-white text-indigo-600 shadow-xs"
-                  : "text-slate-400 hover:text-slate-600"
-              }`}
-              title="List view"
-            >
-              <LayoutList size={15} />
-            </button>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* PDF List / Grid */}
