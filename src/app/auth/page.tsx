@@ -38,7 +38,7 @@ function AuthContent() {
     e.preventDefault();
     const resultAction = await dispatch(loginUser({ username, password }));
     if (loginUser.fulfilled.match(resultAction)) {
-      router.push("/dashboard");
+      router.push("/dashboard/exams");
     }
   };
 
@@ -50,7 +50,7 @@ function AuthContent() {
     }
     const resultAction = await dispatch(registerUser({ username, password }));
     if (registerUser.fulfilled.match(resultAction)) {
-      router.push("/dashboard");
+      router.push("/dashboard/exams");
     }
   };
 
@@ -68,7 +68,13 @@ function AuthContent() {
           <section className="auth-left-panel">
             <div>
               <div className="auth-brand">
-                <div className="auth-brand-icon">✦</div>
+                <div className="auth-brand-icon">
+                  <img
+                    src="/cec-logo.png"
+                    alt="CEC Logo"
+                    className="h-full w-full object-contain"
+                  />
+                </div>
                 <div className="auth-brand-name">CEC</div>
               </div>
 

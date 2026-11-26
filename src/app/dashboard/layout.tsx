@@ -142,9 +142,9 @@ export default function DashboardLayout({
   const safeUnreadCount = isMounted ? unreadCount : 0;
 
   const navItems = [
-    { name: "Dashboard", href: "/dashboard", Icon: Home },
-    { name: "Available Tests", href: "/dashboard/tests", Icon: Compass },
     { name: "My Exams", href: "/dashboard/exams", Icon: BookOpen },
+    { name: "Analytics", href: "/dashboard", Icon: Home },
+    { name: "Available Tests", href: "/dashboard/tests", Icon: Compass },
     { name: "Study Material", href: "/dashboard/pdfs", Icon: FileText },
     { name: "Results", href: "/dashboard/results", Icon: ClipboardList },
     {
@@ -182,7 +182,13 @@ export default function DashboardLayout({
         <div>
           <div className="flex items-center justify-between">
             <div className="dashboard-logo">
-              <div className="dashboard-logo-icon">✦</div>
+              <div className="dashboard-logo-icon">
+                <img
+                  src="/cec-logo.png"
+                  alt="CEC Logo"
+                  className="h-full w-full object-contain"
+                />
+              </div>
               <span>CEC</span>
             </div>
             <button
@@ -241,7 +247,13 @@ export default function DashboardLayout({
         {/* Mobile header */}
         <div className="dashboard-mobile-header">
           <div className="dashboard-mobile-logo">
-            <div className="dashboard-mobile-logo-icon">✦</div>
+            <div className="dashboard-mobile-logo-icon">
+              <img
+                src="/cec-logo.png"
+                alt="CEC Logo"
+                className="h-full w-full object-contain"
+              />
+            </div>
             CEC
           </div>
           <div className="flex items-center gap-3">

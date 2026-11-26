@@ -9,7 +9,11 @@ export default function Home() {
       <nav className="landing-nav">
         <Link href="/" className="landing-logo">
           <div className="landing-logo-icon">
-            <BrainCircuit size={20} />
+            <img
+              src="/cec-logo.png"
+              alt="CEC Logo"
+              className="h-full w-full object-contain"
+            />
           </div>
           QuizMaster
         </Link>
@@ -45,8 +49,8 @@ export default function Home() {
           <Link href="/auth?tab=signup" className="landing-btn-primary">
             Start Learning Free <ArrowRight size={18} />
           </Link>
-          <Link href="/dashboard" className="landing-btn-secondary">
-            View Dashboard
+          <Link href="/dashboard/exams" className="landing-btn-secondary">
+            View My Exams
           </Link>
         </div>
         

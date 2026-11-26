@@ -39,14 +39,16 @@
 }
 
 .dashboard-logo-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 11px;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  font-size: 20px;
+  background: #ffffff;
+  padding: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .dashboard-logo span {
@@ -696,13 +698,16 @@
     font-weight: 700;
   }
   .dashboard-mobile-logo-icon {
-    width: 32px;
-    height: 32px;
+    width: 42px;
+    height: 42px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 9px;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 10px;
+    background: #ffffff;
+    padding: 2px;
+    overflow: hidden;
+    flex-shrink: 0;
   }
   .dashboard-topbar { padding: 0 20px; }
   .dashboard-search { width: 220px; }
