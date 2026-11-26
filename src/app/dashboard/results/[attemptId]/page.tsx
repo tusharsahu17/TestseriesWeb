@@ -137,16 +137,7 @@ export default function ResultPage() {
 
   return (
     <div className="text-[#172033]">
-      <div className="mb-4">
-        <Link
-          href="/dashboard/results"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800"
-        >
-          <ArrowLeft size={14} /> Back to Attempt History
-        </Link>
-      </div>
-
-      <main className="container">
+      <main className="w-full pt-1 px-0.5 pb-10">
         <div className="page-title">
           <h1>Test Result</h1>
           <p>Detailed performance evaluation for your submitted attempt.</p>

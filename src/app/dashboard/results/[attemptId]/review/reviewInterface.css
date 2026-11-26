@@ -585,17 +585,17 @@
 }
 
 .answer-info-title strong {
-  font-size: 10px;
+  font-size: 14px;
 }
 
 .answer-info-title span {
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .answer-info-box p {
   color: #727b8a;
 
-  font-size: 9px;
+  font-size: 13px;
 
   line-height: 1.6;
 }
@@ -627,11 +627,11 @@
 .meta span {
   color: #9098a6;
 
-  font-size: 7px;
+  font-size: 11px;
 }
 
 .meta strong {
-  font-size: 9px;
+  font-size: 14px;
 }
 
 /* =========================
@@ -666,7 +666,7 @@
   cursor: pointer;
 }
 
-.nav-btn:hover {
+.nav-btn:hover:not(:disabled) {
   background: #f7f8fa;
 }
 
@@ -676,6 +676,19 @@
   border-color: #6366f1;
 
   color: white;
+}
+
+.nav-btn.primary:hover:not(:disabled) {
+  background: #4f46e5;
+  border-color: #4f46e5;
+}
+
+.nav-btn:disabled {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .question-position {

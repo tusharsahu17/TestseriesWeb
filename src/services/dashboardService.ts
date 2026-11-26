@@ -187,6 +187,7 @@ export const normalizeAvailableTest = (raw: RawRecord): AvailableTestItem => {
       raw.isPublished !== undefined || raw.is_published !== undefined || testObj.isPublished !== undefined || testObj.is_published !== undefined
         ? asBool(raw.isPublished ?? raw.is_published ?? testObj.isPublished ?? testObj.is_published, true)
         : true,
+    testType: asString(raw.testType ?? raw.test_type ?? testObj.testType ?? testObj.test_type) || null,
     difficulty: asString(raw.difficulty ?? testObj.difficulty, ''),
     startTime: asString(raw.startTime ?? raw.start_time ?? testObj.start_time) || null,
     endTime: asString(raw.endTime ?? raw.end_time ?? testObj.end_time) || null,

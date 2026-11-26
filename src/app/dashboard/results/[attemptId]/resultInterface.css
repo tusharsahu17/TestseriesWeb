@@ -90,11 +90,8 @@
 ========================= */
 
 .container {
-  max-width: 1180px;
-
-  margin: auto;
-
-  /* padding: 0px px 15px; */
+  width: 100%;
+  padding: 4px 2px 40px;
 }
 
 /* =========================

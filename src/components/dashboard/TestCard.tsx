@@ -39,6 +39,14 @@ const formatAttemptStatus = (status: string): string => {
     .join(' ');
 };
 
+const formatTestType = (testType: string): string =>
+  testType
+    .toLowerCase()
+    .split('_')
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+
 export function TestCard({ test, isStarting = false, onAction }: TestCardProps) {
   const isResumable = test.attemptStatus === 'IN_PROGRESS' && !!test.activeAttemptId;
   const canClickAction = test.canStart || isResumable || !!test.latestAttemptId;
@@ -51,6 +59,11 @@ export function TestCard({ test, isStarting = false, onAction }: TestCardProps) 
             <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-700">
               {test.subjectName}
             </span>
+            {test.testType && (
+              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-700">
+                {formatTestType(test.testType)}
+              </span>
+            )}
             {test.isFree && (
               <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
                 Free

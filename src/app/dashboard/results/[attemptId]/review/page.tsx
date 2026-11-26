@@ -168,19 +168,6 @@ export default function ReviewPage() {
 
   return (
     <div className="text-[#172033]">
-      <header className="header">
-        <div className="brand">
-          <div className="logo">Q</div>
-          <div className="brand-info">
-            <h2>CEC</h2>
-            <span>Question-wise Review</span>
-          </div>
-        </div>
-        <button type="button" className="back-btn" onClick={backToResult}>
-          ← Back to Result
-        </button>
-      </header>
-
       <main className="container">
         <div className="page-header">
           <div>
@@ -377,7 +364,12 @@ export default function ReviewPage() {
                   <div className="question-footer">
                     <button
                       type="button"
-                      className="nav-btn"
+                      className={`nav-btn ${
+                        totalQuestions > 1 &&
+                        currentQuestionIdx === totalQuestions - 1
+                          ? "primary"
+                          : ""
+                      }`}
                       onClick={() =>
                         setCurrentQuestionIdx((p) => Math.max(0, p - 1))
                       }
@@ -390,13 +382,15 @@ export default function ReviewPage() {
                     </span>
                     <button
                       type="button"
-                      className="nav-btn primary"
+                      className={`nav-btn ${
+                        currentQuestionIdx < totalQuestions - 1 ? "primary" : ""
+                      }`}
                       onClick={() =>
                         setCurrentQuestionIdx((p) =>
                           Math.min(totalQuestions - 1, p + 1),
                         )
                       }
-                      disabled={currentQuestionIdx === totalQuestions - 1}
+                      disabled={currentQuestionIdx >= totalQuestions - 1}
                     >
                       Next →
                     </button>

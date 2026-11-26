@@ -5,20 +5,20 @@
   color: #697386;
   text-decoration: none;
   font-size: 13px;
-  margin-bottom: 25px;
+  margin-bottom: 16px;
 }
 
 .dashboard-exam-hero {
   background: linear-gradient(135deg, #4f46e5, #7c3aed);
   border-radius: 20px;
-  padding: 35px;
+  padding: 24px 28px;
   color: white;
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: relative;
   overflow: hidden;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
 }
 
 .dashboard-exam-hero::after {
@@ -74,14 +74,14 @@
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 15px;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
 }
 
 .dashboard-hero-stat {
   background: white;
   border: 1px solid #e8eaf0;
   border-radius: 13px;
-  padding: 18px;
+  padding: 14px 16px;
 }
 
 .dashboard-hero-stat span {
@@ -105,8 +105,8 @@
   background: white;
   border: 1px solid #e8eaf0;
   border-radius: 15px;
-  padding: 22px;
-  margin-bottom: 20px;
+  padding: 18px;
+  margin-bottom: 18px;
 }
 
 .dashboard-exam-detail-card h2 {

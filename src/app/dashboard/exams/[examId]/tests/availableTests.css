@@ -3,9 +3,8 @@
 ========================= */
 
 .at-container {
-  max-width: 1250px;
-  margin: auto;
-  padding: 20px 0 60px;
+  width: 100%;
+  padding: 4px 2px 40px;
 }
 
 /* =========================

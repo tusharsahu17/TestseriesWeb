@@ -1,11 +1,11 @@
-'use client';
-import { useEffect, useState } from 'react';
-import { getData } from '../../../../../services/apiClient';
-import { ENDPOINTS } from '../../../../../constants/apiEndpoints';
-import Link from 'next/link';
-import { Loader2 } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
-import './examDetails.css';
+"use client";
+import { useEffect, useState } from "react";
+import { getData } from "../../../../../services/apiClient";
+import { ENDPOINTS } from "../../../../../constants/apiEndpoints";
+import Link from "next/link";
+import { Loader2 } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import "./examDetails.css";
 
 export default function SubjectsPage() {
   const params = useParams();
@@ -20,7 +20,9 @@ export default function SubjectsPage() {
     const fetchData = async () => {
       try {
         // Fetch subjects for this exam
-        const subjectsData = await getData(`${ENDPOINTS.EXAMS}/${examId}/subjects`);
+        const subjectsData = await getData(
+          `${ENDPOINTS.EXAMS}/${examId}/subjects`,
+        );
         setSubjects(subjectsData);
 
         // Fetch exam details
@@ -30,7 +32,11 @@ export default function SubjectsPage() {
         }
       } catch (err: any) {
         const errData = err.response?.data;
-        setError(typeof errData === 'string' ? errData : errData?.message || 'Failed to fetch data');
+        setError(
+          typeof errData === "string"
+            ? errData
+            : errData?.message || "Failed to fetch data",
+        );
       } finally {
         setIsLoading(false);
       }
@@ -56,16 +62,13 @@ export default function SubjectsPage() {
     return <div className="text-red-600 p-4 bg-red-50 rounded-lg">{error}</div>;
   }
 
-  const examName = examType?.name || 'Exam';
-  const examDesc = examType?.description || 'Examination designed to evaluate your understanding of various subjects.';
+  const examName = examType?.name || "Exam";
+  const examDesc =
+    examType?.description ||
+    "Examination designed to evaluate your understanding of various subjects.";
 
   return (
-    <div className="max-w-[1200px] mx-auto pb-10">
-      {/* BACK */}
-      <Link href="/dashboard/exams" className="dashboard-exam-back">
-        ← Back to Exams
-      </Link>
-
+    <div className="w-full pt-1 px-0.5 pb-10">
       {/* HERO */}
       <section className="dashboard-exam-hero">
         <div className="dashboard-hero-content">
@@ -73,14 +76,14 @@ export default function SubjectsPage() {
           <h1>{examName}</h1>
           <p>{examDesc}</p>
         </div>
-        <button 
-          className="dashboard-start-btn" 
+        <button
+          className="dashboard-start-btn"
           disabled={isStarting}
           onClick={() => {
             router.push(`/dashboard/exams/${examId}/tests`);
           }}
         >
-          {isStarting ? 'Loading...' : 'Start Exam →'}
+          {isStarting ? "Loading..." : "Start Exam →"}
         </button>
       </section>
 
@@ -110,15 +113,16 @@ export default function SubjectsPage() {
 
       {/* MAIN */}
       <div className="dashboard-exam-grid-layout">
-        
         {/* LEFT */}
         <div>
           {/* ABOUT */}
           <div className="dashboard-exam-detail-card">
             <h2>About this Exam</h2>
             <p className="dashboard-exam-about">
-              {examName} is a comprehensive examination for students aspiring to excel in their respective fields.
-              <br /><br />
+              {examName} is a comprehensive examination for students aspiring to
+              excel in their respective fields.
+              <br />
+              <br />
               The examination includes questions from various critical subjects.
             </p>
           </div>
@@ -126,28 +130,27 @@ export default function SubjectsPage() {
           {/* SUBJECTS */}
           <div className="dashboard-exam-detail-card">
             <h2>Subjects & Tests</h2>
-            
+
             <div className="dashboard-subject-list">
               {subjects.map((subject, index) => {
-                const icons = ['∑', '⚛', '🧪', '📚', '💡', '⚕'];
+                const icons = ["∑", "⚛", "🧪", "📚", "💡", "⚕"];
                 const icon = icons[index % icons.length];
-                
+
                 return (
-                  <div 
+                  <div
                     key={subject.id || subject._id}
-                    className="dashboard-subject-item" 
-                    onClick={() => handleStartTest(subject.id || subject._id)}
+                    className="dashboard-subject-item"
+                    // onClick={() => handleStartTest(subject.id || subject._id)}
                   >
                     <div className="dashboard-subject-icon">{icon}</div>
                     <div className="dashboard-subject-info">
-                      <strong>{subject.name || 'Subject'}</strong>
-                      <span>{Math.floor(Math.random() * 200 + 100)} Questions • {Math.floor(Math.random() * 10 + 5)} Tests</span>
+                      <strong>{subject.name || "Subject"}</strong>
                     </div>
-                    <span className="dashboard-test-count">View →</span>
+                    {/* <span className="dashboard-test-count">View →</span> */}
                   </div>
                 );
               })}
-              
+
               {subjects.length === 0 && (
                 <div className="text-center py-4 text-gray-500 text-sm">
                   No subjects available.
@@ -164,30 +167,21 @@ export default function SubjectsPage() {
             <h2>Before You Start</h2>
             <div className="dashboard-requirements">
               <div className="dashboard-requirement">
-                <span className="dashboard-check">✓</span> Stable internet connection
+                <span className="dashboard-check">✓</span> Stable internet
+                connection
               </div>
               <div className="dashboard-requirement">
-                <span className="dashboard-check">✓</span> Complete the test within the given time
+                <span className="dashboard-check">✓</span> Complete the test
+                within the given time
               </div>
               <div className="dashboard-requirement">
-                <span className="dashboard-check">✓</span> Do not refresh the browser during test
+                <span className="dashboard-check">✓</span> Do not refresh the
+                browser during test
               </div>
               <div className="dashboard-requirement">
-                <span className="dashboard-check">✓</span> Each question can have one answer
+                <span className="dashboard-check">✓</span> Each question can
+                have one answer
               </div>
-            </div>
-          </div>
-
-          {/* PERFORMANCE */}
-          <div className="dashboard-exam-detail-card">
-            <h2>Your Performance</h2>
-            <div className="dashboard-hero-stat" style={{ border: 'none', padding: '0 0 15px 0' }}>
-              <span>Your Average Score</span>
-              <strong>78%</strong>
-            </div>
-            <div className="dashboard-hero-stat" style={{ border: 'none', padding: 0 }}>
-              <span>Tests Completed</span>
-              <strong>8 / 12</strong>
             </div>
           </div>
         </div>
