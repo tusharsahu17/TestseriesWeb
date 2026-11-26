@@ -44,6 +44,7 @@ import type {
 } from '../../types/dashboard';
 import { ScoreTrendChart } from '../../components/dashboard/ScoreTrendChart';
 import { TestCard } from '../../components/dashboard/TestCard';
+import { YouTubeVideosSection } from '../../components/dashboard/YouTubeVideosSection';
 import { StartTestModal, useTestStarter } from '../../components/dashboard/StartTestModal';
 import { PdfViewerModal } from '../../components/pdf/PdfViewerModal';
 import { formatFileSize, pdfService } from '../../services/pdfService';
@@ -679,6 +680,8 @@ export default function DashboardPage() {
         )}
       </div>
 
+      {/* YOUTUBE CHANNEL VIDEOS */}
+      <YouTubeVideosSection />
 
       {/* Start validation / conflict modal */}
       <StartTestModal

@@ -29,6 +29,7 @@ import {
   Home,
   LogOut,
   Menu,
+  PlayCircle,
   Search,
   X,
 } from "lucide-react";
@@ -149,6 +150,7 @@ export default function DashboardLayout({
     { name: "Available Tests", href: "/dashboard/tests", Icon: Compass },
     { name: "Analytics", href: "/dashboard", Icon: Home },
     { name: "Study Material", href: "/dashboard/pdfs", Icon: FileText },
+    { name: "Videos", href: "/dashboard/videos", Icon: PlayCircle },
     { name: "Results", href: "/dashboard/results", Icon: ClipboardList },
     {
       name: "Performance",
