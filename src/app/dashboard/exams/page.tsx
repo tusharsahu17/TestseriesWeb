@@ -72,8 +72,6 @@ export default function ExamsPage() {
 
       <div className="dashboard-page-header">
         <div className="dashboard-page-heading">
-          <div className="dashboard-page-heading-icon">📝</div>
-
           <div>
             <h1>Exams</h1>
 

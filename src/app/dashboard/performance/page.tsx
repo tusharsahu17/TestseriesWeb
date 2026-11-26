@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import {
   AlertCircle,
   Award,
@@ -12,20 +12,26 @@ import {
   TrendingUp,
   XCircle,
   MinusCircle,
-} from 'lucide-react';
-import { dashboardService, formatDurationSeconds } from '../../../services/dashboardService';
-import type { PerformanceAnalytics, PerformanceStatus } from '../../../types/dashboard';
-import { ScoreTrendChart } from '../../../components/dashboard/ScoreTrendChart';
+} from "lucide-react";
+import {
+  dashboardService,
+  formatDurationSeconds,
+} from "../../../services/dashboardService";
+import type {
+  PerformanceAnalytics,
+  PerformanceStatus,
+} from "../../../types/dashboard";
+import { ScoreTrendChart } from "../../../components/dashboard/ScoreTrendChart";
 import {
   getPerformanceBarClass,
   PerformanceStatusBadge,
-} from '../../../components/dashboard/StatusBadges';
+} from "../../../components/dashboard/StatusBadges";
 
-type SubjectFilter = 'ALL' | PerformanceStatus;
+type SubjectFilter = "ALL" | PerformanceStatus;
 
 export default function PerformancePage() {
   const [analytics, setAnalytics] = useState<PerformanceAnalytics | null>(null);
-  const [statusFilter, setStatusFilter] = useState<SubjectFilter>('ALL');
+  const [statusFilter, setStatusFilter] = useState<SubjectFilter>("ALL");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,7 +41,7 @@ export default function PerformancePage() {
       setError(null);
       setAnalytics(data);
     } catch {
-      setError('Failed to load performance analytics.');
+      setError("Failed to load performance analytics.");
     } finally {
       setIsLoading(false);
     }
@@ -58,7 +64,9 @@ export default function PerformancePage() {
     return (
       <div className="flex flex-col items-center justify-center py-32">
         <Loader2 className="h-10 w-10 animate-spin text-indigo-600 mb-3" />
-        <p className="text-sm font-medium text-slate-500">Loading performance analytics...</p>
+        <p className="text-sm font-medium text-slate-500">
+          Loading performance analytics...
+        </p>
       </div>
     );
   }
@@ -67,7 +75,9 @@ export default function PerformancePage() {
     return (
       <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center text-rose-700">
         <AlertCircle size={24} className="mx-auto mb-2" />
-        <p className="text-sm font-semibold">{error || 'Unable to load analytics.'}</p>
+        <p className="text-sm font-semibold">
+          {error || "Unable to load analytics."}
+        </p>
         <button
           type="button"
           onClick={handleRetry}
@@ -83,7 +93,7 @@ export default function PerformancePage() {
   const totalQuestions =
     metrics.totalCorrect + metrics.totalIncorrect + metrics.totalSkipped;
   const filteredSubjects = subjectWisePerformance.filter(
-    (s) => statusFilter === 'ALL' || s.status === statusFilter,
+    (s) => statusFilter === "ALL" || s.status === statusFilter,
   );
 
   return (
@@ -92,7 +102,8 @@ export default function PerformancePage() {
         <div>
           <h1>Performance Analytics</h1>
           <p>
-            Insights across your evaluated attempts, score trend (T1–T10), and subject mastery.
+            Insights across your evaluated attempts, score trend (T1–T10), and
+            subject mastery.
           </p>
         </div>
         <Link
@@ -121,7 +132,9 @@ export default function PerformancePage() {
             <div className="dashboard-stat-icon dashboard-blue">
               <TrendingUp size={20} />
             </div>
-            <span className="dashboard-trend">{metrics.totalEvaluatedTests} tests</span>
+            <span className="dashboard-trend">
+              {metrics.totalEvaluatedTests} tests
+            </span>
           </div>
           <h2>{Number(metrics.averageScore).toFixed(1)}%</h2>
           <p>Average Score</p>
@@ -151,7 +164,7 @@ export default function PerformancePage() {
       </div>
 
       {/* Score Trend + Question Totals */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div >
         <div className="lg:col-span-2 dashboard-card">
           <div className="dashboard-card-header">
             <div>
@@ -164,7 +177,7 @@ export default function PerformancePage() {
           <ScoreTrendChart points={scoreTrend} height={240} />
         </div>
 
-        <div className="dashboard-card flex flex-col justify-between">
+        {/* <div className="dashboard-card flex flex-col justify-between">
           <div>
             <div className="dashboard-card-header">
               <h3>Answer Breakdown</h3>
@@ -236,7 +249,7 @@ export default function PerformancePage() {
               </div>
             </div>
           )}
-        </div>
+        </div> */}
       </div>
 
       {/* Subject-wise Performance */}
@@ -245,22 +258,30 @@ export default function PerformancePage() {
           <div>
             <h3>Subject-wise Performance</h3>
             <p className="text-[11px] text-slate-400 mt-0.5">
-              Strong (≥ 80%) • Average (60–79.99%) • Needs improvement (&lt; 60%)
+              Strong (≥ 80%) • Average (60–79.99%) • Needs improvement (&lt;
+              60%)
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {(['ALL', 'Strong', 'Average', 'Needs improvement'] as SubjectFilter[]).map((st) => (
+            {(
+              [
+                "ALL",
+                "Strong",
+                "Average",
+                "Needs improvement",
+              ] as SubjectFilter[]
+            ).map((st) => (
               <button
                 key={st}
                 type="button"
                 onClick={() => setStatusFilter(st)}
                 className={`rounded-xl px-3 py-1.5 text-xs font-semibold cursor-pointer ${
                   statusFilter === st
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? "bg-indigo-600 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                 }`}
               >
-                {st === 'ALL' ? 'All Subjects' : st}
+                {st === "ALL" ? "All Subjects" : st}
               </button>
             ))}
           </div>
@@ -278,32 +299,44 @@ export default function PerformancePage() {
                 className="rounded-2xl border border-slate-200 p-4 hover:border-indigo-200 transition-colors"
               >
                 <div className="flex items-center justify-between gap-2 mb-2">
-                  <h4 className="text-sm font-bold text-slate-900">{subj.subject}</h4>
+                  <h4 className="text-sm font-bold text-slate-900">
+                    {subj.subject}
+                  </h4>
                   <PerformanceStatusBadge status={subj.status} />
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-slate-600 mb-1.5">
                   <span>Score / Mastery</span>
-                  <strong className="text-slate-900">{Number(subj.percentage).toFixed(1)}%</strong>
+                  <strong className="text-slate-900">
+                    {Number(subj.percentage).toFixed(1)}%
+                  </strong>
                 </div>
                 <div className="dashboard-bar mb-3">
                   <div
                     className={`h-full rounded-full ${getPerformanceBarClass(subj.status)}`}
-                    style={{ width: `${Math.min(100, Math.max(0, subj.percentage))}%` }}
+                    style={{
+                      width: `${Math.min(100, Math.max(0, subj.percentage))}%`,
+                    }}
                   />
                 </div>
 
                 <div className="grid grid-cols-4 gap-2 text-center rounded-xl bg-slate-50 p-2.5 text-[11px]">
                   <div>
-                    <strong className="block text-emerald-700">{subj.correctCount}</strong>
+                    <strong className="block text-emerald-700">
+                      {subj.correctCount}
+                    </strong>
                     <span className="text-slate-400">Correct</span>
                   </div>
                   <div>
-                    <strong className="block text-rose-700">{subj.wrongCount}</strong>
+                    <strong className="block text-rose-700">
+                      {subj.wrongCount}
+                    </strong>
                     <span className="text-slate-400">Wrong</span>
                   </div>
                   <div>
-                    <strong className="block text-slate-700">{subj.skippedCount}</strong>
+                    <strong className="block text-slate-700">
+                      {subj.skippedCount}
+                    </strong>
                     <span className="text-slate-400">Skipped</span>
                   </div>
                   <div>

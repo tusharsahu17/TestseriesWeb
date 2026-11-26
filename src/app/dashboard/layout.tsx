@@ -6,6 +6,7 @@ import {
   selectIsAuthenticated,
   selectAuthUser,
   logout,
+  setAuthUser,
 } from "../auth/authSlice";
 import {
   fetchDashboardNotifications,
@@ -35,6 +36,7 @@ import {
   formatRelativeTime,
   getNotificationMeta,
 } from "../../components/dashboard/notificationMeta";
+import ProfileModal from "../../components/dashboard/ProfileModal";
 import type { UserNotification } from "../../types/dashboard";
 import "./dashboard.css";
 
@@ -55,6 +57,7 @@ export default function DashboardLayout({
   const [isMounted, setIsMounted] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const notifRef = useRef<HTMLDivElement | null>(null);
 
@@ -143,8 +146,8 @@ export default function DashboardLayout({
 
   const navItems = [
     { name: "My Exams", href: "/dashboard/exams", Icon: BookOpen },
-    { name: "Analytics", href: "/dashboard", Icon: Home },
     { name: "Available Tests", href: "/dashboard/tests", Icon: Compass },
+    { name: "Analytics", href: "/dashboard", Icon: Home },
     { name: "Study Material", href: "/dashboard/pdfs", Icon: FileText },
     { name: "Results", href: "/dashboard/results", Icon: ClipboardList },
     {
@@ -186,6 +189,8 @@ export default function DashboardLayout({
                 <img
                   src="/cec-logo.png"
                   alt="CEC Logo"
+                  width={80}
+                  height={80}
                   className="h-full w-full object-contain"
                 />
               </div>
@@ -280,7 +285,7 @@ export default function DashboardLayout({
 
         {/* Desktop Topbar */}
         <header className="dashboard-topbar">
-          <form onSubmit={handleSearchSubmit} className="dashboard-search">
+          {/* <form onSubmit={handleSearchSubmit} className="dashboard-search">
             <Search size={15} className="dashboard-search-icon" />
             <input
               type="text"
@@ -288,7 +293,7 @@ export default function DashboardLayout({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-          </form>
+          </form> */}
 
           <div className="dashboard-top-actions ml-auto">
             {/* Notification Bell + Dropdown */}
@@ -390,19 +395,45 @@ export default function DashboardLayout({
               )}
             </div>
 
-            <div className="dashboard-profile">
+            <button
+              type="button"
+              onClick={() => setIsProfileOpen(true)}
+              className="dashboard-profile cursor-pointer text-left hover:opacity-85 transition-opacity"
+              aria-label="Open profile"
+            >
               <div className="dashboard-avatar">{initials}</div>
               <div className="dashboard-profile-info">
                 <strong>{displayName}</strong>
-                <span className="capitalize">{roleLabel.toLowerCase()}</span>
+                {/* <span className="capitalize">{roleLabel.toLowerCase()}</span> */}
               </div>
-            </div>
+            </button>
           </div>
         </header>
 
         {/* Content (Injected per page) */}
         <section className="dashboard-content">{children}</section>
       </main>
+
+      <ProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        onLogout={handleLogout}
+        onProfileSynced={(profile) => {
+          dispatch(
+            setAuthUser({
+              ...(authUser ?? { id: profile.id }),
+              ...profile,
+              id: profile.id || authUser?.id || "",
+              name: profile.name ?? undefined,
+              email: profile.email ?? undefined,
+            }),
+          );
+        }}
+        user={isMounted ? authUser : null}
+        displayName={displayName}
+        initials={initials}
+        roleLabel={roleLabel}
+      />
     </div>
   );
 }

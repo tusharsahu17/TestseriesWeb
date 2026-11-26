@@ -224,7 +224,6 @@ function PdfsContent() {
         {/* Right side controls: Category Filter, Sort & View Toggle */}
         <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 shrink-0">
           <div className="flex items-center gap-2">
-            <Filter size={14} className="text-slate-400" />
             <select
               value={currentCategoryValue}
               onChange={(e) => setSelectedCategoryOverride(e.target.value)}
@@ -234,14 +233,14 @@ function PdfsContent() {
               <option value="ALL">All Categories ({totalPdfsCount})</option>
               {categories.map((cat) => (
                 <option key={cat.id} value={String(cat.id)}>
-                  {cat.name} ({cat.pdfCount || (cat.pdfs ? cat.pdfs.length : 0)})
+                  {cat.name} ({cat.pdfCount || (cat.pdfs ? cat.pdfs.length : 0)}
+                  )
                 </option>
               ))}
             </select>
           </div>
 
           <div className="flex items-center gap-2">
-            <SlidersHorizontal size={14} className="text-slate-400" />
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}

@@ -17,6 +17,7 @@ export const ENDPOINTS = {
   USER_DASHBOARD_PERFORMANCE: '/api/user/dashboard/performance',
   USER_DASHBOARD_NOTIFICATIONS: '/api/user/dashboard/notifications',
   USER_NOTIFICATIONS: '/api/user/notifications',
+  USER_PROFILE: '/api/user/profile',
   ADMIN_DASHBOARD_NOTIFICATIONS: '/api/admin/dashboard/notifications',
 
   // PDF & Study Material APIs

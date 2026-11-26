@@ -260,29 +260,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Welcome */}
-      <div className="dashboard-welcome">
-        <div>
-          <h1>Welcome back, {greetingName}</h1>
-          <p>Track your test series, active assessments, and analytics in one place.</p>
-        </div>
-        <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={handleRefreshDashboard}
-            disabled={isRefreshing}
-            className="dashboard-date-btn cursor-pointer hover:bg-slate-50"
-          >
-            <RefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} />
-            <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
-          </button>
-          <div className="dashboard-date-btn">
-            <Calendar size={14} />
-            <span>{todayLabel}</span>
-          </div>
-        </div>
-      </div>
-
       {error && (
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-700">
           <div className="flex items-center gap-2.5">
@@ -462,23 +439,6 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
-
-          {/* Score Trend (T1..T10) */}
-          <div className="dashboard-card">
-            <div className="dashboard-card-header">
-              <div>
-                <h3>Score Trend (Latest 10 Attempts)</h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Normalized 0–100% across T1–T10 • Highest:{' '}
-                  {Number(performance.metrics.highestScore).toFixed(1)}%
-                </p>
-              </div>
-              <Link href="/dashboard/performance" className="dashboard-view-all">
-                Full Analytics
-              </Link>
-            </div>
-            <ScoreTrendChart points={performance.scoreTrend} height={190} />
-          </div>
         </div>
 
         {/* Subject-wise Performance + Notifications Summary */}
@@ -566,6 +526,23 @@ export default function DashboardPage() {
             </div>
           </div> */}
         </div>
+      </div>
+
+      {/* Score Trend (T1..T10) */}
+      <div className="dashboard-card w-full">
+        <div className="dashboard-card-header">
+          <div>
+            <h3>Score Trend (Latest 10 Attempts)</h3>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Normalized 0–100% across T1–T10 • Highest:{' '}
+              {Number(performance.metrics.highestScore).toFixed(1)}%
+            </p>
+          </div>
+          <Link href="/dashboard/performance" className="dashboard-view-all">
+            Full Analytics
+          </Link>
+        </div>
+        <ScoreTrendChart points={performance.scoreTrend} height={190} />
       </div>
 
       {/* AVAILABLE TESTS DISCOVERY BUCKETS */}

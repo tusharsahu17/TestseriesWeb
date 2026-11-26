@@ -267,3 +267,24 @@ export interface CombinedDashboardData {
   notifications: NotificationsResponse;
 }
 
+export interface StudentProfile {
+  id: string | number;
+  username: string;
+  role: string;
+  status?: string;
+  subscription_status?: string;
+  created_at?: string;
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  last_login_at?: string | null;
+  last_active_at?: string | null;
+}
+
+export interface UpdateProfilePayload {
+  username?: string;
+  name?: string;
+  email?: string;
+}
+
+

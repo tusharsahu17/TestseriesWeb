@@ -1,5 +1,5 @@
 import { AxiosError } from 'axios';
-import { getData, patchData, postData } from './apiClient';
+import { getData, patchData, postData, putData } from './apiClient';
 import { ENDPOINTS } from '../constants/apiEndpoints';
 import type {
   AttemptResultDetail,
@@ -19,9 +19,11 @@ import type {
   ScoreTrendPoint,
   StartTestSuccess,
   StartTestValidationError,
+  StudentProfile,
   StudentTestSeries,
   SubjectPerformanceItem,
   TestSeriesStatus,
+  UpdateProfilePayload,
   UserNotification,
 } from '../types/dashboard';
 
@@ -932,6 +934,33 @@ export const extractStartValidationError = (err: unknown): StartTestValidationEr
   };
 };
 
+const normalizeStudentProfile = (raw: unknown): StudentProfile => {
+  const root = asRecord(raw);
+  const level1 = asRecord(root.data ?? root.user ?? root.profile ?? raw);
+  const level2 = asRecord(level1.user ?? level1.profile ?? level1);
+  const item = Object.keys(level2).length > 0 ? level2 : Object.keys(level1).length > 0 ? level1 : root;
+
+  return {
+    id: (item.id as string | number) ?? '',
+    username: asString(item.username),
+    role: asString(item.role, 'student'),
+    status: item.status ? asString(item.status) : undefined,
+    subscription_status: item.subscription_status ? asString(item.subscription_status) : undefined,
+    created_at: item.created_at ? asString(item.created_at) : undefined,
+    name: item.name !== undefined && item.name !== null ? asString(item.name) : null,
+    email: item.email !== undefined && item.email !== null ? asString(item.email) : null,
+    phone: item.phone !== undefined && item.phone !== null ? asString(item.phone) : null,
+    last_login_at:
+      item.last_login_at !== undefined && item.last_login_at !== null
+        ? asString(item.last_login_at)
+        : null,
+    last_active_at:
+      item.last_active_at !== undefined && item.last_active_at !== null
+        ? asString(item.last_active_at)
+        : null,
+  };
+};
+
 export const dashboardService = {
   async getCombinedDashboard(): Promise<CombinedDashboardData> {
     const raw = await getData<unknown>(ENDPOINTS.USER_DASHBOARD);
@@ -1143,6 +1172,16 @@ export const dashboardService = {
     testId?: string | number;
   }): Promise<unknown> {
     return postData(ENDPOINTS.ADMIN_DASHBOARD_NOTIFICATIONS, payload);
+  },
+
+  async getProfile(): Promise<StudentProfile> {
+    const raw = await getData<unknown>(ENDPOINTS.USER_PROFILE);
+    return normalizeStudentProfile(raw);
+  },
+
+  async updateProfile(payload: UpdateProfilePayload): Promise<StudentProfile> {
+    const raw = await putData<unknown>(ENDPOINTS.USER_PROFILE, payload);
+    return normalizeStudentProfile(raw);
   },
 };
 
